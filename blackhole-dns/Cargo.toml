@@ -1,0 +1,20 @@
+[package]
+name = "blackhole-dns"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+async-trait = "0.1.92"
+blackhole-core = { version = "0.1.0", path = "../blackhole-core" }
+clap = { version = "4.6.6", features = ["derive"] }
+directories = "6.0.0"
+hickory-proto = "0.26.1"
+hickory-resolver = { version = "0.26.1", features = ["tokio", "system-config", "https-ring", "tls-ring", "webpki-roots", "dnssec-ring"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+thiserror = "2.0.20"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "net", "time", "process"] }
+toml = "1"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
