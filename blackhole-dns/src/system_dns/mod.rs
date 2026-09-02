@@ -3,9 +3,12 @@
 //! it doesn't matter what we intended to configure if the OS is actually
 //! still sending plaintext queries somewhere else.
 
+#[cfg(target_os = "windows")]
 use std::net::IpAddr;
 
+#[cfg(target_os = "windows")]
 use crate::error::DnsError;
+#[cfg(target_os = "windows")]
 use crate::resolver::Provider;
 
 #[cfg(target_os = "linux")]
