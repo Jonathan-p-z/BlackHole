@@ -1,0 +1,44 @@
+# BlackHole configuration.
+#
+# This file is entirely optional: every module works with sensible
+# defaults if it's absent, or if any key below is missing or commented
+# out. Nothing here is required — it exists so an advanced user can
+# override a default without having to type the equivalent CLI flag every
+# time. A CLI flag, where the tool has one, always wins over whatever is
+# set here.
+#
+# Installed by install.sh/install.ps1 as a starting point, at:
+#   Linux:   ~/.config/blackhole/config.toml
+#   macOS:   ~/Library/Application Support/blackhole/config.toml
+#   Windows: %APPDATA%\blackhole\config\config.toml
+# The installer only *copies* this file if nothing is there yet — it will
+# never overwrite a config.toml you've already edited.
+
+[core]
+# "arti" (default, recommended, in-process) or "subprocess" (drives the
+# official tor binary as a child process — a temporary workaround for a
+# known arti bootstrap bug, not a permanent replacement). See the root
+# TOR_BACKENDS.md before changing this.
+tor_backend = "arti"
+
+# Only read when tor_backend = "subprocess". If unset, blackhole-core
+# looks for a tor/tor.exe on PATH or in a common Tor Browser install
+# location — see TOR_BACKENDS.md for exactly where.
+# tor_binary_path = "/path/to/tor"
+
+[dns]
+# DoH/DoT providers blackhole-dns tries, in priority order. If the first
+# one fails (network error, or fails DNSSEC validation), it automatically
+# falls back to the next and logs the switch. Never falls back to an
+# unencrypted resolver, at any priority. Options: "cloudflare", "quad9",
+# "mullvad".
+providers = ["cloudflare", "quad9", "mullvad"]
+
+# "doh" (DNS-over-HTTPS, works everywhere via the local relay or natively)
+# or "dot" (DNS-over-TLS, systemd-resolved native support on Linux).
+transport = "doh"
+
+[fingerprint]
+# How often `blackhole-fingerprint daemon` scans, in seconds, when
+# `--interval-secs` isn't passed on the command line. Default: once a day.
+daemon_interval_secs = 86400
