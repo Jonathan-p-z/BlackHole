@@ -1,0 +1,27 @@
+# cargo-audit configuration for the BlackHole workspace.
+#
+# Every ignored advisory here MUST have a matching, dated entry in
+# SECURITY.md explaining why it's accepted rather than fixed. Do not add an
+# entry here without one there — this file says *what* is ignored,
+# SECURITY.md says *why*, and the two must never drift apart.
+#
+# Re-review this list whenever `cargo audit` output changes (new advisory,
+# or one of these finally gets a fix) — don't just keep extending it.
+
+[advisories]
+ignore = [
+    # RSA Marvin Attack timing side-channel (RUSTSEC-2023-0071). Transitive
+    # via arti-client -> tor-keymgr -> tor-key-forge -> ssh-key-fork-arti,
+    # for parsing RSA keys in SSH-format key files. No fix is published
+    # upstream. See SECURITY.md for the exploitability assessment.
+    "RUSTSEC-2023-0071",
+    # `paste` unmaintained (RUSTSEC-2024-0436). Transitive proc-macro
+    # dependency via arti-client -> tor-memquota -> slotmap-careful. No
+    # vulnerability, informational only. See SECURITY.md.
+    "RUSTSEC-2024-0436",
+    # `bincode` 2.0.1 unmaintained (RUSTSEC-2025-0141). Present in
+    # Cargo.lock only as an unactivated optional feature of
+    # typed-index-collections (via tor-dirmgr); not part of any compiled
+    # target in this workspace. See SECURITY.md.
+    "RUSTSEC-2025-0141",
+]
