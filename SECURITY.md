@@ -12,11 +12,11 @@ workspace:
 
 Policy: zero open advisories without a documented, dated exception below.
 Every ignored advisory ID in `.cargo/audit.toml` must have a matching entry
-here — if the two ever disagree, `.cargo/audit.toml` is wrong.
+here; if the two ever disagree, `.cargo/audit.toml` is wrong.
 
 ### Accepted exceptions
 
-#### RUSTSEC-2023-0071 — `rsa` 0.9.10, Marvin Attack timing side-channel
+#### RUSTSEC-2023-0071: `rsa` 0.9.10, Marvin Attack timing side-channel
 
 - **Status**: accepted, no fixed upgrade published upstream as of 2026-08-31.
 - **Path**: transitive only, via
@@ -31,7 +31,7 @@ here — if the two ever disagree, `.cargo/audit.toml` is wrong.
 - **Revisit when**: a `rsa` release fixes the timing side-channel, or
   `arti-client` moves off the affected code path.
 
-#### RUSTSEC-2024-0436 — `paste` unmaintained
+#### RUSTSEC-2024-0436: `paste` unmaintained
 
 - **Status**: accepted; informational warning, not a vulnerability.
 - **Path**: transitive proc-macro dependency via
@@ -42,14 +42,14 @@ here — if the two ever disagree, `.cargo/audit.toml` is wrong.
 - **Revisit when**: `slotmap-careful` (or `tor-memquota`) drops the
   dependency, or an actual advisory is filed against `paste` itself.
 
-#### RUSTSEC-2025-0141 — `bincode` 2.0.1 unmaintained
+#### RUSTSEC-2025-0141: `bincode` 2.0.1 unmaintained
 
 - **Status**: accepted; informational warning, not a vulnerability, and not
   actually compiled into this workspace.
 - **Path**: present in `Cargo.lock` only as an unactivated optional feature
   of `typed-index-collections` (pulled in via `tor-dirmgr`). Confirmed via
   `cargo tree -i bincode --workspace --all-features --target all`, which
-  resolves to nothing — `bincode` is not part of any target this workspace
+  resolves to nothing: `bincode` is not part of any target this workspace
   actually builds.
 - **Revisit when**: `typed-index-collections` (or `tor-dirmgr`) drops the
   dependency, or we ever enable a feature that activates it.
@@ -67,14 +67,14 @@ cookies) in our own code:
 - `blackhole-dns` holds only IP addresses and provider config, never
   credentials.
 - `blackhole-fingerprint` reads identifiers (hostname, MachineGuid, MAC
-  addresses) that are quasi-identifying but not secrets — and the tool's
+  addresses) that are quasi-identifying but not secrets, and the tool's
   entire purpose is to display them in its report, so wrapping them in
   `zeroize` would add no real protection while implying one that isn't
   there.
 - `blackhole-mobile-ffi` passes only `u32` severity codes across the FFI
   boundary.
 
-Given that, `zeroize` is deliberately **not** added as a dependency yet —
+Given that, `zeroize` is deliberately **not** added as a dependency yet:
 adding it with no real use site would be dead weight, not hardening.
 
 **Policy for future code**: the moment any crate in this workspace holds
@@ -85,7 +85,7 @@ must:
 1. Depend on `zeroize` and derive `ZeroizeOnDrop` (and `Zeroize` on any
    type it's built from that also holds the secret).
 2. Avoid `Clone`/`Debug` derives that would copy or print the secret
-   verbatim — implement `Debug` by hand to redact it if a `Debug` impl is
+   verbatim; implement `Debug` by hand to redact it if a `Debug` impl is
    needed at all.
 3. Be re-audited here, with this section updated to name the struct and
    why it's exempt from (or covered by) the above.
@@ -97,18 +97,18 @@ Summary of what's automated vs. manual:
 
 - **Unit-tested** (`cargo test`, no privileged access needed):
   `blackhole-core::guard::GuardStateMachine` (every state transition, and
-  `reconcile()` — the in-memory-vs-actual-OS-state cross-check shared by
+  `reconcile()`, the in-memory-vs-actual-OS-state cross-check shared by
   both platform backends); `blackhole-dns::relay::Relay::build_response`
   (a failed upstream resolve always yields `SERVFAIL` with zero answer
   records, never a fabricated or stale address);
-  `blackhole-dns::leak::enforce_on_leak` (a detected leak — including "the
-  encrypted resolver itself is unreachable," i.e. what a DNS timeout looks
-  like — always drives the kill switch to a known-blocking state, in every
+  `blackhole-dns::leak::enforce_on_leak` (a detected leak, including "the
+  encrypted resolver itself is unreachable" (i.e. what a DNS timeout looks
+  like), always drives the kill switch to a known-blocking state, in every
   guard state except an in-flight transition it must not race).
 - **Structural, not unit-testable in this environment** (requires a live
   OS and admin/root): once `enable()` succeeds, blocking is enforced by
   the OS itself (`nftables`/WFP default-deny), independent of this
-  process staying alive — so a crash of the BlackHole process does not
+  process staying alive, so a crash of the BlackHole process does not
   open the firewall back up, and a lost Tor circuit does not create a
   path around the firewall (only loopback and the Tor-owning
   process/UID are ever permitted). Verify manually with the checklist in

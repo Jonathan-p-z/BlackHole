@@ -10,7 +10,7 @@ message's `read` field, so saturating to 0 is harmless; it just stops the
 panic.
 
 Applied via `fuzz/Cargo.toml`'s `[patch.crates-io]`, scoped to the `fuzz`
-crate only (its own standalone `[workspace]`) — **the real `blackhole-dns`
+crate only (its own standalone `[workspace]`): **the real `blackhole-dns`
 binary is unaffected** and still builds against the real, unpatched
 `hickory-proto` from crates.io. This exists purely so
 `fuzz/fuzz_targets/dns_relay_parse.rs` can get past this one known,
