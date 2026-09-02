@@ -1,0 +1,36 @@
+# Optional, opt-in systemd unit: re-applies the last-persisted kill-switch
+# nftables ruleset at boot, before network comes up, so a machine that had
+# the kill switch on before a reboot/crash doesn't come back up wide open.
+# See ../../BOOT_PERSISTENCE.md for what this does and doesn't guarantee,
+# and exactly how to install it — this file is not installed by
+# install.sh/install.ps1 automatically (that installer never touches
+# system-wide paths or root; this unit necessarily does both).
+#
+# What it runs is `blackhole-core restore-firewall` — no Tor backend is
+# started, no bootstrap is attempted; it only re-applies the firewall
+# ruleset saved by the last successful `blackhole-core enable`. If no
+# ruleset was ever persisted (kill switch never enabled, or cleanly
+# disabled before shutdown), this exits 0 having done nothing — that's the
+# correct baseline, not a failure.
+
+[Unit]
+Description=BlackHole kill switch — restore last-known firewall state at boot
+DefaultDependencies=no
+Before=network-pre.target
+Wants=network-pre.target
+# Skips the unit entirely (shows as "skipped" in systemctl, not "failed")
+# on a machine that never persisted a ruleset. Adjust this path to match
+# BLACKHOLE_NFTABLES_RULESET_PATH below if you've overridden it.
+ConditionPathExists=/etc/blackhole/nftables.rules
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Adjust this path if blackhole-core isn't installed system-wide at this
+# exact location on your machine — see BOOT_PERSISTENCE.md.
+ExecStart=/usr/local/bin/blackhole-core restore-firewall
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=sysinit.target
