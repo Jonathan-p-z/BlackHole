@@ -6,7 +6,7 @@
 ![Rust](https://img.shields.io/badge/language-Rust-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-lightgrey.svg)
 
-<img src="assets/GSFC_20171208_Archive_e000984~medium.jpg" alt="Black hole illustration (NASA/GSFC)" width="480"/>
+<img src="assets/blackhole-header.jpg" alt="Black hole illustration (NASA/GSFC)" width="480"/>
 
 </div>
 
