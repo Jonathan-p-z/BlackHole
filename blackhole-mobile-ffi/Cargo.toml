@@ -1,0 +1,13 @@
+[package]
+name = "blackhole-mobile-ffi"
+version = "0.1.0"
+edition = "2024"
+
+# staticlib: linked into the iOS app via a bridging header, per
+# `cargo build --release --target aarch64-apple-ios` on a Mac (see
+# blackhole-mobile-ios/README.md — not buildable in this dev environment).
+# lib: kept so `cargo test`/`cargo check` work normally on the host too.
+[lib]
+crate-type = ["staticlib", "lib"]
+
+[dependencies]
