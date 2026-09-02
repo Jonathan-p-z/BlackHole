@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace --all-targets
+
+  test:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+
+  clippy:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+
+  fmt:
+    needs: clippy
+    # Formatting is OS-independent (it's a property of the source text, not
+    # the compiled output), so this runs once on Linux rather than in the
+    # matrix — nothing platform-specific to catch here, unlike build/test/
+    # clippy above.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo fmt --check
+
+# Deliberately not run here:
+# - fuzz/: long-running, needs WSL/Linux sanitizers, already documented as
+#   a manual step in fuzz/FUZZING.md. It's also its own standalone Cargo
+#   workspace (see fuzz/Cargo.toml), so none of the `--workspace` commands
+#   above touch it regardless.
+# - chaos/: has its own workflow (chaos.yml) since it needs root and
+#   network-namespace capabilities beyond a standard build/test/clippy
+#   runner step. Also its own standalone workspace, same reasoning as fuzz/.
