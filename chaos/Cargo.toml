@@ -1,0 +1,32 @@
+[package]
+name = "blackhole-chaos"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[dependencies]
+async-trait = "0.1.92"
+blackhole-core = { path = "../blackhole-core" }
+blackhole-dns = { path = "../blackhole-dns" }
+hickory-proto = "0.26.1"
+libc = "0.2.189"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "net", "time", "process", "io-util", "signal"] }
+
+[[bin]]
+name = "chaos_enable_and_hang"
+path = "src/bin/chaos_enable_and_hang.rs"
+
+[[bin]]
+name = "chaos_dns_enforce"
+path = "src/bin/chaos_dns_enforce.rs"
+
+[[bin]]
+name = "chaos_udp_probe"
+path = "src/bin/chaos_udp_probe.rs"
+
+# Deliberately its own workspace (not a member of the root Cargo.toml's
+# `[workspace]`) — same reasoning as fuzz/Cargo.toml: this crate is
+# Linux-only (network namespaces, nftables, setuid probes), root-requiring,
+# and slow, so it shouldn't affect `cargo build --workspace` on any other
+# platform or in ordinary CI. See README.md for how to build/run it.
+[workspace]

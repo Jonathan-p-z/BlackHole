@@ -1,0 +1,32 @@
+name: chaos tests
+
+on:
+  push:
+    paths:
+      - "blackhole-core/**"
+      - "blackhole-dns/**"
+      - "chaos/**"
+      - ".github/workflows/chaos.yml"
+  pull_request:
+    paths:
+      - "blackhole-core/**"
+      - "blackhole-dns/**"
+      - "chaos/**"
+      - ".github/workflows/chaos.yml"
+  workflow_dispatch: {}
+
+jobs:
+  chaos:
+    # GitHub-hosted ubuntu-latest runners have passwordless sudo and run as
+    # a real VM (not a restricted container), so `ip netns`/nftables/
+    # `setpriv` all work the same as on any other Ubuntu box. If that ever
+    # stops being true, swap this for a self-hosted dedicated Linux runner
+    # (e.g. `runs-on: [self-hosted, linux]`) — nothing else about the suite
+    # changes. See chaos/README.md's "CI" section: this hasn't been
+    # verified against a real Actions run yet (no public remote to push to
+    # at the time this workflow was written).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo bash chaos/scripts/install_prereqs.sh
+      - run: sudo -E bash chaos/scripts/run_chaos_tests.sh
