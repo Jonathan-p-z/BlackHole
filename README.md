@@ -1,5 +1,9 @@
 # BlackHole
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Rust](https://img.shields.io/badge/language-Rust-orange.svg)
+![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-lightgrey.svg)
+
 BlackHole is a small set of command-line privacy tools for Linux and
 Windows: a fail-closed kill switch that blocks network traffic outside
 Tor, a DNS leak detector that forces encrypted resolution, a status
@@ -27,17 +31,19 @@ Installation section below.
 
 ## What's here
 
-| Crate | Purpose |
-| --- | --- |
-| `blackhole-core` | Fail-closed kill switch (nftables on Linux, WFP on Windows) plus Tor orchestration: `arti` in-process by default, or the official `tor` binary as a subprocess (see [`TOR_BACKENDS.md`](TOR_BACKENDS.md)). Linux firewall state survives a reboot (see [`BOOT_PERSISTENCE.md`](BOOT_PERSISTENCE.md)). |
-| `blackhole-dns` | Anti-DNS-leak: forces encrypted DNS (DoH/DoT), detects leaks, can trigger the kill switch. |
-| `blackhole-dashboard` | `ratatui` status TUI over the two modules above. |
-| `blackhole-fingerprint` | Read-only local traceability audit (hostname/MAC/telemetry/public exposure). |
-| `blackhole-mobile-ffi` | C-ABI scoring bridge shared with `blackhole-mobile-ios`. |
-| `blackhole-mobile-ios` | SwiftUI + `PacketTunnelProvider` iOS app (separate, non-Cargo project). |
+| Crate | Purpose | Status |
+| --- | --- | --- |
+| `blackhole-core` | Fail-closed kill switch (nftables on Linux, WFP on Windows) plus Tor orchestration: `arti` in-process by default, or the official `tor` binary as a subprocess (see [`TOR_BACKENDS.md`](TOR_BACKENDS.md)). Linux firewall state survives a reboot (see [`BOOT_PERSISTENCE.md`](BOOT_PERSISTENCE.md)). | working |
+| `blackhole-dns` | Anti-DNS-leak: forces encrypted DNS (DoH/DoT), detects leaks, can trigger the kill switch. | working |
+| `blackhole-dashboard` | `ratatui` status TUI over the two modules above. | working |
+| `blackhole-fingerprint` | Read-only local traceability audit (hostname/MAC/telemetry/public exposure). | working |
+| `blackhole-mobile-ffi` | C-ABI scoring bridge shared with `blackhole-mobile-ios`. | working |
+| `blackhole-mobile-ios` | SwiftUI + `PacketTunnelProvider` iOS app (separate, non-Cargo project). | untested |
 
 Each crate carries a `THREAT_MODEL.md`: what it protects, against what
 adversary, and what it explicitly does not protect against.
+
+---
 
 ## Installation
 
@@ -95,6 +101,8 @@ is what works. Then, optionally, copy
 [`config.example.toml`](config.example.toml) to the location noted in
 its own header comment and edit it; every setting it documents is
 optional and has a sensible default without it.
+
+---
 
 ## Security, testing, and limits
 
@@ -170,12 +178,13 @@ the root one.
 sudo -E ./chaos/scripts/run_chaos_tests.sh
 ```
 
+---
+
 ## Contributing
 
 There's no public repository for this project yet (see the
 [Installation](#installation) section above), so there's no issue tracker
 or pull request flow to point to right now. It's licensed under the
-[MIT License](LICENSE); if
-you have a clone and want to change something, the per-crate
-`THREAT_MODEL.md` files and `SECURITY.md` are the right starting context
-before touching anything security-relevant.
+[MIT License](LICENSE); if you have a clone and want to change something,
+the per-crate `THREAT_MODEL.md` files and `SECURITY.md` are the right
+starting context before touching anything security-relevant.
