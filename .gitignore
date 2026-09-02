@@ -25,3 +25,5 @@ Thumbs.db
 # rather than deleted, since it's harmless, inert leftover, not evidence
 # worth erasing.
 /blackhole-core/Cargo.lock
+
+fuzz/corpus/
