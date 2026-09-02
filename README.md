@@ -1,8 +1,14 @@
+<div align="center">
+
 # BlackHole
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Rust](https://img.shields.io/badge/language-Rust-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-lightgrey.svg)
+
+<img src="assets/GSFC_20171208_Archive_e000984~medium.jpg" alt="Black hole illustration (NASA/GSFC)" width="480"/>
+
+</div>
 
 BlackHole is a small set of command-line privacy tools for Linux and
 Windows: a fail-closed kill switch that blocks network traffic outside
