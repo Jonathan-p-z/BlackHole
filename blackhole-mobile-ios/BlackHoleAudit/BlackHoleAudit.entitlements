@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      Xcode adds "Personal VPN" (com.apple.developer.networking.vpn.api)
+      automatically when you add the Network Extension capability with a
+      Packet Tunnel target. Merge that entry into this file rather than
+      replacing Xcode's generated entitlements outright.
+
+      If you use an App Group to share state between the app and the
+      tunnel extension (e.g. so the extension can report forwarded-flow
+      counts back to the UI), add it here AND in
+      BlackHoleTunnel.entitlements with the identical group identifier —
+      Xcode's "+ Capability > App Groups" UI is the reliable way to wire
+      this up correctly.
+    -->
+    <key>com.apple.developer.networking.vpn.api</key>
+    <array>
+        <string>allow-vpn</string>
+    </array>
+</dict>
+</plist>

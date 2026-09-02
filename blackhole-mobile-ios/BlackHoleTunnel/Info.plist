@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      Xcode's "Network Extension > Packet Tunnel" target template
+      generates this key structure for you already — this file exists so
+      the expected shape is documented alongside the Swift source. Diff it
+      against whatever Xcode produced rather than pasting over it, since
+      Xcode also fills in NSExtensionPointIdentifier/bundle version keys
+      this file doesn't repeat.
+    -->
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.networkextension.packet-tunnel</string>
+        <key>NSExtensionPrincipalClass</key>
+        <string>$(PRODUCT_MODULE_NAME).PacketTunnelProvider</string>
+    </dict>
+</dict>
+</plist>
