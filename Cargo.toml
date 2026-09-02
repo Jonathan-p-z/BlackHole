@@ -1,0 +1,3 @@
+[workspace]
+resolver = "2"
+members = ["blackhole-core", "blackhole-dashboard", "blackhole-dns", "blackhole-fingerprint", "blackhole-mobile-ffi"]

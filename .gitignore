@@ -1,0 +1,27 @@
+/target
+# fuzz/ and chaos/ are each their own standalone Cargo workspace (see their
+# Cargo.toml comments), so their build output lands in their own target/,
+# not the root one /target already covers.
+/fuzz/target
+/chaos/target
+**/*.rs.bk
+*.pdb
+
+# Xcode
+**/xcuserdata/
+**/*.xcodeproj/project.xcworkspace/
+**/DerivedData/
+**/*.xcworkspace/xcuserdata/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Local Claude Code session state (not project content)
+/.claude/
+
+# Stale per-crate lockfile from before blackhole-core joined the workspace
+# (Cargo workspaces resolve from the root Cargo.lock only) — kept out
+# rather than deleted, since it's harmless, inert leftover, not evidence
+# worth erasing.
+/blackhole-core/Cargo.lock
