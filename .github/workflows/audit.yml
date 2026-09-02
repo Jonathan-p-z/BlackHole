@@ -1,0 +1,32 @@
+name: cargo audit
+
+on:
+  push:
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - ".cargo/audit.toml"
+      - ".github/workflows/audit.yml"
+  pull_request:
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - ".cargo/audit.toml"
+      - ".github/workflows/audit.yml"
+  schedule:
+    # New advisories land against unchanged dependencies all the time, so
+    # this runs weekly even without a Cargo.toml/Cargo.lock change.
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Runs the exact same `cargo audit` invocation as `scripts/audit.sh`,
+      # so CI and a local run can never disagree about what's flagged.
+      # Exceptions live in .cargo/audit.toml (documented in SECURITY.md),
+      # not as flags here.
+      - run: cargo install cargo-audit --locked
+      - run: bash scripts/audit.sh

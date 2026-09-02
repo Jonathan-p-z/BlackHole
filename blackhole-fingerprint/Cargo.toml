@@ -1,0 +1,16 @@
+[package]
+name = "blackhole-fingerprint"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.6", features = ["derive"] }
+directories = "6.0.0"
+hostname = "0.4.2"
+reqwest = { version = "0.13.4", features = ["blocking", "json", "rustls"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+thiserror = "2.0.20"
+time = { version = "0.3", features = ["formatting", "macros"] }
+toml = "1"
