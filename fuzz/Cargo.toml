@@ -1,0 +1,42 @@
+[package]
+name = "blackhole-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hickory-proto = "0.26.1"
+blackhole-dns = { path = "../blackhole-dns" }
+blackhole-fingerprint = { path = "../blackhole-fingerprint" }
+
+[[bin]]
+name = "dns_relay_parse"
+path = "fuzz_targets/dns_relay_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fingerprint_report_parse"
+path = "fuzz_targets/fingerprint_report_parse.rs"
+test = false
+doc = false
+bench = false
+
+# Deliberately its own workspace (not a member of the root Cargo.toml's
+# `[workspace]`) — the standard cargo-fuzz convention, since libfuzzer-sys
+# needs sanitizer/coverage instrumentation flags that shouldn't leak into
+# the rest of the workspace's normal builds.
+[workspace]
+
+# Fuzzing-only override, scoped to this crate's own standalone workspace —
+# does NOT affect the real blackhole-dns/blackhole-core binaries built from
+# the root workspace, which still use the unpatched, real crates.io
+# hickory-proto. See patched-deps/README.md for why this exists and what
+# it changes.
+[patch.crates-io]
+hickory-proto = { path = "patched-deps/hickory-proto-0.26.1" }

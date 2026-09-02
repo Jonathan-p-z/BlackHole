@@ -1,0 +1,8 @@
+# Fuzzer-generated seed corpus and crash artifacts are byte-exact inputs —
+# any newline conversion would silently corrupt them (autocrlf is on for
+# this repo's Windows contributors, and git's text/binary autodetection
+# isn't reliable enough to trust for arbitrary fuzzer bytes that may not
+# contain a NUL byte). Force them untouched, regardless of local
+# core.autocrlf.
+/fuzz/corpus/** -text
+/fuzz/artifacts/** -text
