@@ -20,6 +20,6 @@ pub use error::BlackholeError;
 pub use guard::{GuardState, GuardStateMachine, GuardStatus, NetworkGuard};
 pub use platform::PlatformGuard;
 #[cfg(target_os = "linux")]
-pub use platform::{default_ruleset_path, restore_persisted_ruleset, RulesetRestoreOutcome};
+pub use platform::{RulesetRestoreOutcome, default_ruleset_path, restore_persisted_ruleset};
 pub use tor::{PermitTarget, TorBackend, TorOrchestrator, TorStatus};
 pub use tor_subprocess::{SubprocessConfig, SubprocessTorBackend};

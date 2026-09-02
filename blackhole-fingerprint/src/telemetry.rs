@@ -46,12 +46,14 @@ mod imp {
 
     fn check_service(unit: &str, description: &str) -> Vec<Finding> {
         match systemctl_is_active(unit) {
-            Some(true) => vec![Finding::new(
-                Category::Telemetry,
-                Severity::Medium,
-                format!("{unit} ({description}) is active"),
-            )
-            .with_recommendation(format!("disable it: `sudo systemctl disable --now {unit}`"))],
+            Some(true) => vec![
+                Finding::new(
+                    Category::Telemetry,
+                    Severity::Medium,
+                    format!("{unit} ({description}) is active"),
+                )
+                .with_recommendation(format!("disable it: `sudo systemctl disable --now {unit}`")),
+            ],
             Some(false) => vec![Finding::new(
                 Category::Telemetry,
                 Severity::Info,
@@ -109,12 +111,16 @@ mod imp {
                     Category::Telemetry,
                     Severity::Info,
                     "could not query the DiagTrack service",
-                )]
+                )];
             }
         };
 
         if raw.trim().is_empty() {
-            return vec![Finding::new(Category::Telemetry, Severity::Info, "DiagTrack service not found")];
+            return vec![Finding::new(
+                Category::Telemetry,
+                Severity::Info,
+                "DiagTrack service not found",
+            )];
         }
 
         let info: ServiceInfo = match serde_json::from_str(raw.trim()) {
@@ -124,7 +130,7 @@ mod imp {
                     Category::Telemetry,
                     Severity::Info,
                     "could not parse DiagTrack service state",
-                )]
+                )];
             }
         };
 
@@ -141,7 +147,10 @@ mod imp {
             vec![Finding::new(
                 Category::Telemetry,
                 Severity::Info,
-                format!("DiagTrack service is {} (start type: {})", info.status, info.start_type),
+                format!(
+                    "DiagTrack service is {} (start type: {})",
+                    info.status, info.start_type
+                ),
             )]
         }
     }

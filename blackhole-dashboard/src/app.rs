@@ -114,7 +114,10 @@ impl App {
     pub fn apply(&mut self, mut snapshot: Snapshot) {
         if snapshot.banner.is_some() {
             self.banner_expires_at = Some(Instant::now() + BANNER_LIFETIME);
-        } else if self.banner_expires_at.is_some_and(|deadline| Instant::now() < deadline) {
+        } else if self
+            .banner_expires_at
+            .is_some_and(|deadline| Instant::now() < deadline)
+        {
             snapshot.banner = self.snapshot.banner.clone();
         } else {
             self.banner_expires_at = None;
@@ -127,7 +130,10 @@ impl App {
     /// Called on every render tick so an expired banner disappears even
     /// without a new snapshot arriving.
     pub fn expire_banner(&mut self) {
-        if self.banner_expires_at.is_some_and(|deadline| Instant::now() >= deadline) {
+        if self
+            .banner_expires_at
+            .is_some_and(|deadline| Instant::now() >= deadline)
+        {
             self.snapshot.banner = None;
             self.banner_expires_at = None;
         }

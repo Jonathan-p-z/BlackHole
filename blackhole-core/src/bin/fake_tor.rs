@@ -24,7 +24,9 @@ fn main() {
     }
 
     let control_port = arg_value(&args, "--ControlPort").expect("fake_tor requires --ControlPort");
-    let data_dir = PathBuf::from(arg_value(&args, "--DataDirectory").expect("fake_tor requires --DataDirectory"));
+    let data_dir = PathBuf::from(
+        arg_value(&args, "--DataDirectory").expect("fake_tor requires --DataDirectory"),
+    );
 
     std::fs::create_dir_all(&data_dir).expect("create DataDirectory");
     std::fs::write(data_dir.join("control_auth_cookie"), [0xABu8; 32]).expect("write cookie");
@@ -61,7 +63,10 @@ fn main() {
 }
 
 fn arg_value(args: &[String], flag: &str) -> Option<String> {
-    args.iter().position(|a| a == flag).and_then(|i| args.get(i + 1)).cloned()
+    args.iter()
+        .position(|a| a == flag)
+        .and_then(|i| args.get(i + 1))
+        .cloned()
 }
 
 fn control_port_addr(control_port_arg: &str) -> String {

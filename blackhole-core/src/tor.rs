@@ -152,13 +152,20 @@ impl TorOrchestrator {
             .map_err(|e| BlackholeError::Tor(format!("exit-ip stream failed: {e}")))?;
 
         stream
-            .write_all(format!("GET / HTTP/1.1\r\nHost: {ECHO_HOST}\r\nConnection: close\r\n\r\n").as_bytes())
+            .write_all(
+                format!("GET / HTTP/1.1\r\nHost: {ECHO_HOST}\r\nConnection: close\r\n\r\n")
+                    .as_bytes(),
+            )
             .await?;
 
         let mut buf = Vec::new();
         stream.read_to_end(&mut buf).await?;
         let text = String::from_utf8_lossy(&buf);
-        let body = text.rsplit_once("\r\n\r\n").map(|(_, b)| b).unwrap_or("").trim();
+        let body = text
+            .rsplit_once("\r\n\r\n")
+            .map(|(_, b)| b)
+            .unwrap_or("")
+            .trim();
 
         body.parse()
             .map_err(|_| BlackholeError::Tor(format!("unexpected exit-ip response body: {body:?}")))

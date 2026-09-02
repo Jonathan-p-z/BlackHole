@@ -157,8 +157,8 @@ pub async fn enforce_on_leak(
 mod tests {
     use super::*;
     use blackhole_core::{BlackholeError, GuardStatus};
-    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Mutex;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     /// A `NetworkGuard` double that records calls instead of touching any
     /// real firewall/Tor state, so `enforce_on_leak`'s fail-closed decision

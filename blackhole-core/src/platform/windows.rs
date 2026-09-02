@@ -41,10 +41,10 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use tracing::{info, warn};
-use windows::core::{HSTRING, GUID, PCWSTR, PWSTR, w};
 use windows::Win32::Foundation::HANDLE;
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::*;
 use windows::Win32::System::Rpc::RPC_C_AUTHN_WINNT;
+use windows::core::{GUID, HSTRING, PCWSTR, PWSTR, w};
 
 use crate::error::BlackholeError;
 use crate::guard::{GuardStateMachine, GuardStatus, NetworkGuard};
@@ -109,9 +109,8 @@ impl WindowsGuard {
         // SAFETY: all pointer arguments are either null (server name =
         // local machine, no custom auth identity/session) or point to a
         // valid, correctly-sized `HANDLE` we just created.
-        let status = unsafe {
-            FwpmEngineOpen0(PCWSTR::null(), RPC_C_AUTHN_WINNT, None, None, &mut handle)
-        };
+        let status =
+            unsafe { FwpmEngineOpen0(PCWSTR::null(), RPC_C_AUTHN_WINNT, None, None, &mut handle) };
         if status != 0 {
             return Err(BlackholeError::Platform(format!(
                 "FwpmEngineOpen0 failed (0x{status:08x})"
@@ -427,7 +426,10 @@ impl NetworkGuard for WindowsGuard {
         if result.is_ok() {
             info!("WFP kill switch enabled (default-deny outbound IPv4/IPv6)");
         } else {
-            warn!(?result, "failed to fully apply WFP kill switch; treating as faulted (fail-closed)");
+            warn!(
+                ?result,
+                "failed to fully apply WFP kill switch; treating as faulted (fail-closed)"
+            );
         }
         result
     }

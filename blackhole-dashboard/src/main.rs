@@ -15,7 +15,10 @@ use backend::Command;
 use data::{DataSource, LiveDataSource, MockDataSource};
 
 #[derive(Parser)]
-#[command(name = "blackhole-dashboard", about = "Real-time BlackHole status dashboard")]
+#[command(
+    name = "blackhole-dashboard",
+    about = "Real-time BlackHole status dashboard"
+)]
 struct Cli {
     /// Use synthetic, fabricated data instead of the real blackhole-core /
     /// blackhole-dns modules. Useful for UI development and demos.

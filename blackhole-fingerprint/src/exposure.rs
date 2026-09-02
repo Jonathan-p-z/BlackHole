@@ -46,7 +46,7 @@ pub fn parse_report(bytes: &[u8]) -> Vec<Finding> {
                 Category::Exposure,
                 Severity::Info,
                 format!("could not parse IP-info response: {e}"),
-            )]
+            )];
         }
     };
     findings_from_ip_info(info)
@@ -70,13 +70,22 @@ fn findings_from_ip_info(info: IpInfoResponse) -> Vec<Finding> {
         .flatten()
         .collect::<Vec<_>>()
         .join(", ");
-    let org = info.org.unwrap_or_else(|| "(unknown network operator)".to_string());
+    let org = info
+        .org
+        .unwrap_or_else(|| "(unknown network operator)".to_string());
 
     let looks_like_privacy_egress = ["tor", "vpn", "relay", "proxy"]
         .iter()
         .any(|kw| org.to_lowercase().contains(kw));
 
-    let summary = format!("outbound traffic exits as {ip} via {org}{}", if location.is_empty() { String::new() } else { format!(" ({location})") });
+    let summary = format!(
+        "outbound traffic exits as {ip} via {org}{}",
+        if location.is_empty() {
+            String::new()
+        } else {
+            format!(" ({location})")
+        }
+    );
 
     if looks_like_privacy_egress {
         vec![Finding::new(
@@ -103,18 +112,24 @@ pub fn checks() -> Vec<Finding> {
                 Category::Exposure,
                 Severity::Info,
                 format!("could not build HTTP client for exposure check: {e}"),
-            )]
+            )];
         }
     };
 
-    let response = match client.get(IP_INFO_URL).send().and_then(|r| r.error_for_status()) {
+    let response = match client
+        .get(IP_INFO_URL)
+        .send()
+        .and_then(|r| r.error_for_status())
+    {
         Ok(r) => r,
         Err(e) => {
             return vec![Finding::new(
                 Category::Exposure,
                 Severity::Info,
-                format!("could not reach the public IP-info service ({e}); skipping network exposure check"),
-            )]
+                format!(
+                    "could not reach the public IP-info service ({e}); skipping network exposure check"
+                ),
+            )];
         }
     };
 
@@ -125,7 +140,7 @@ pub fn checks() -> Vec<Finding> {
                 Category::Exposure,
                 Severity::Info,
                 format!("could not read IP-info response body: {e}"),
-            )]
+            )];
         }
     };
 
@@ -186,7 +201,8 @@ mod tests {
 
     #[test]
     fn tor_vpn_org_is_info_not_medium() {
-        let findings = parse_report(br#"{"ip": "203.0.113.5", "org": "Some Tor Exit Relay Operator"}"#);
+        let findings =
+            parse_report(br#"{"ip": "203.0.113.5", "org": "Some Tor Exit Relay Operator"}"#);
         assert_eq!(findings.len(), 1);
         assert_eq!(findings[0].severity, Severity::Info);
         assert!(findings[0].summary.contains("Tor/VPN egress"));

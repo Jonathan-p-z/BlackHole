@@ -71,7 +71,11 @@ pub fn active_servers() -> Result<Vec<IpAddr>, DnsError> {
 /// turn on DNS-over-TLS for it.
 pub fn force_via_dot(provider: Provider) -> Result<(), DnsError> {
     let interface = default_interface()?;
-    let ip_args: Vec<String> = provider.ip_addrs().iter().map(|ip| ip.to_string()).collect();
+    let ip_args: Vec<String> = provider
+        .ip_addrs()
+        .iter()
+        .map(|ip| ip.to_string())
+        .collect();
 
     let mut dns_args: Vec<&str> = vec!["dns", &interface];
     dns_args.extend(ip_args.iter().map(String::as_str));

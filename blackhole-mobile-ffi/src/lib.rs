@@ -38,7 +38,10 @@ fn penalty(severity_code: u32) -> i32 {
 /// `severities` must point to a valid, readable array of at least `len`
 /// `u32` values; `severities` may be null only if `len` is 0.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn blackhole_score_from_severities(severities: *const u32, len: usize) -> u32 {
+pub unsafe extern "C" fn blackhole_score_from_severities(
+    severities: *const u32,
+    len: usize,
+) -> u32 {
     if len == 0 {
         return 100;
     }
@@ -69,14 +72,16 @@ mod tests {
     #[test]
     fn matches_report_score_weights() {
         let severities = [3u32, 2, 1]; // High + Medium + Low = 25 + 12 + 5 = 42
-        let score = unsafe { blackhole_score_from_severities(severities.as_ptr(), severities.len()) };
+        let score =
+            unsafe { blackhole_score_from_severities(severities.as_ptr(), severities.len()) };
         assert_eq!(score, 58);
     }
 
     #[test]
     fn clamps_at_zero() {
         let severities = [3u32; 10]; // way more than 100 points of penalty
-        let score = unsafe { blackhole_score_from_severities(severities.as_ptr(), severities.len()) };
+        let score =
+            unsafe { blackhole_score_from_severities(severities.as_ptr(), severities.len()) };
         assert_eq!(score, 0);
     }
 }

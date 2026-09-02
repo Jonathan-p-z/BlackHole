@@ -15,7 +15,9 @@ pub fn checks() -> Result<Vec<Finding>, FingerprintError> {
 }
 
 fn current_username() -> Option<String> {
-    std::env::var("USER").or_else(|_| std::env::var("USERNAME")).ok()
+    std::env::var("USER")
+        .or_else(|_| std::env::var("USERNAME"))
+        .ok()
 }
 
 fn is_generic_hostname(name: &str) -> bool {
@@ -36,7 +38,7 @@ fn check_hostname() -> Vec<Finding> {
                 Category::NetworkIdentity,
                 Severity::Info,
                 "could not read hostname",
-            )]
+            )];
         }
     };
 
@@ -178,8 +180,9 @@ fn is_virtual_interface(name: &str) -> bool {
 
 #[cfg(target_os = "linux")]
 fn check_mac_addresses() -> Result<Vec<Finding>, FingerprintError> {
-    let entries = std::fs::read_dir("/sys/class/net")
-        .map_err(|e| FingerprintError::Inspect(format!("failed to list network interfaces: {e}")))?;
+    let entries = std::fs::read_dir("/sys/class/net").map_err(|e| {
+        FingerprintError::Inspect(format!("failed to list network interfaces: {e}"))
+    })?;
 
     let mut findings = Vec::new();
     for entry in entries.flatten() {

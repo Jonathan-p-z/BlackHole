@@ -4,7 +4,7 @@ use std::sync::Arc;
 use blackhole_core::{PlatformGuard, TorOrchestrator};
 use blackhole_dns::config::DnsConfig;
 use blackhole_dns::resolver::Transport;
-use blackhole_dns::{config, leak, relay, EncryptedResolver, Provider};
+use blackhole_dns::{EncryptedResolver, Provider, config, leak, relay};
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
@@ -102,7 +102,9 @@ fn resolve_providers(cli: Option<Vec<ProviderArg>>, config: &DnsConfig) -> Vec<P
 }
 
 fn resolve_transport(cli: Option<TransportArg>, config: &DnsConfig) -> Transport {
-    cli.map(Into::into).or(config.transport).unwrap_or(Transport::Doh)
+    cli.map(Into::into)
+        .or(config.transport)
+        .unwrap_or(Transport::Doh)
 }
 
 #[tokio::main]
@@ -146,10 +148,15 @@ async fn main() -> anyhow::Result<()> {
                 blackhole_dns::system_dns::force_via_relay(IpAddr::V4(
                     std::net::Ipv4Addr::LOCALHOST,
                 ))?;
-                println!("OS resolver now points at the local relay (start it with `blackhole-dns serve`).");
+                println!(
+                    "OS resolver now points at the local relay (start it with `blackhole-dns serve`)."
+                );
             } else {
                 blackhole_dns::system_dns::force_via_dot(provider.into())?;
-                println!("OS resolver forced to {} via encrypted DNS.", Provider::from(provider));
+                println!(
+                    "OS resolver forced to {} via encrypted DNS.",
+                    Provider::from(provider)
+                );
             }
         }
         Command::Serve {

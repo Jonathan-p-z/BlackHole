@@ -1,8 +1,8 @@
+use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Gauge, Paragraph, Wrap};
-use ratatui::Frame;
 
 use crate::app::{App, Danger, DnsInfo, KillSwitchInfo, ModuleState, TorInfo};
 
@@ -63,10 +63,16 @@ fn draw_header(frame: &mut Frame, area: Rect, app: &App) {
     let text = Line::from(vec![
         Span::styled(
             " BlackHole ",
-            Style::default().fg(Color::Black).bg(color).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::Black)
+                .bg(color)
+                .add_modifier(Modifier::BOLD),
         ),
         Span::raw("  "),
-        Span::styled(label, Style::default().fg(color).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            label,
+            Style::default().fg(color).add_modifier(Modifier::BOLD),
+        ),
     ]);
 
     let paragraph = Paragraph::new(text)
@@ -100,7 +106,9 @@ fn initializing_paragraph(title: &str) -> Paragraph<'static> {
 
 fn draw_kill_switch(frame: &mut Frame, area: Rect, state: &ModuleState<KillSwitchInfo>) {
     match state {
-        ModuleState::Initializing => frame.render_widget(initializing_paragraph("Kill Switch"), area),
+        ModuleState::Initializing => {
+            frame.render_widget(initializing_paragraph("Kill Switch"), area)
+        }
         ModuleState::Unavailable(reason) => {
             frame.render_widget(unavailable_paragraph("Kill Switch", reason), area)
         }
@@ -113,7 +121,10 @@ fn draw_kill_switch(frame: &mut Frame, area: Rect, state: &ModuleState<KillSwitc
             let lines = vec![
                 Line::from(vec![
                     Span::raw("state:   "),
-                    Span::styled(info.state.clone(), Style::default().fg(color).add_modifier(Modifier::BOLD)),
+                    Span::styled(
+                        info.state.clone(),
+                        Style::default().fg(color).add_modifier(Modifier::BOLD),
+                    ),
                 ]),
                 Line::from(format!(
                     "egress:  {}",
@@ -134,9 +145,15 @@ fn draw_kill_switch(frame: &mut Frame, area: Rect, state: &ModuleState<KillSwitc
 fn draw_tor(frame: &mut Frame, area: Rect, state: &ModuleState<TorInfo>) {
     match state {
         ModuleState::Initializing => frame.render_widget(initializing_paragraph("Tor"), area),
-        ModuleState::Unavailable(reason) => frame.render_widget(unavailable_paragraph("Tor", reason), area),
+        ModuleState::Unavailable(reason) => {
+            frame.render_widget(unavailable_paragraph("Tor", reason), area)
+        }
         ModuleState::Ok(info) => {
-            let color = if info.ready_for_traffic { GREEN } else { YELLOW };
+            let color = if info.ready_for_traffic {
+                GREEN
+            } else {
+                YELLOW
+            };
             let inner = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Length(3), Constraint::Min(1)])
@@ -157,11 +174,17 @@ fn draw_tor(frame: &mut Frame, area: Rect, state: &ModuleState<TorInfo>) {
             let lines = vec![
                 Line::from(format!(
                     "status:   {}",
-                    if info.ready_for_traffic { "connected" } else { "bootstrapping" }
+                    if info.ready_for_traffic {
+                        "connected"
+                    } else {
+                        "bootstrapping"
+                    }
                 )),
                 Line::from(format!(
                     "exit ip:  {}",
-                    info.exit_ip.map(|ip| ip.to_string()).unwrap_or_else(|| "(unknown)".to_string())
+                    info.exit_ip
+                        .map(|ip| ip.to_string())
+                        .unwrap_or_else(|| "(unknown)".to_string())
                 )),
             ];
             frame.render_widget(Paragraph::new(lines).wrap(Wrap { trim: true }), inner[1]);
@@ -172,7 +195,9 @@ fn draw_tor(frame: &mut Frame, area: Rect, state: &ModuleState<TorInfo>) {
 fn draw_dns(frame: &mut Frame, area: Rect, state: &ModuleState<DnsInfo>) {
     match state {
         ModuleState::Initializing => frame.render_widget(initializing_paragraph("DNS"), area),
-        ModuleState::Unavailable(reason) => frame.render_widget(unavailable_paragraph("DNS", reason), area),
+        ModuleState::Unavailable(reason) => {
+            frame.render_widget(unavailable_paragraph("DNS", reason), area)
+        }
         ModuleState::Ok(info) => {
             let color = if info.leak_detected { RED } else { GREEN };
             let mut lines = vec![
@@ -186,7 +211,9 @@ fn draw_dns(frame: &mut Frame, area: Rect, state: &ModuleState<DnsInfo>) {
                 ]),
                 Line::from(format!(
                     "latency:  {}",
-                    info.latency_ms.map(|l| format!("{l} ms")).unwrap_or_else(|| "(n/a)".to_string())
+                    info.latency_ms
+                        .map(|l| format!("{l} ms"))
+                        .unwrap_or_else(|| "(n/a)".to_string())
                 )),
             ];
             if info.leak_detected && !info.leaking_servers.is_empty() {
@@ -214,17 +241,35 @@ fn draw_help(frame: &mut Frame, area: Rect, app: &App) {
     let text = if app.panic_in_flight {
         Line::from(Span::styled(
             " triggering panic mode... ",
-            Style::default().fg(Color::Black).bg(RED).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::Black)
+                .bg(RED)
+                .add_modifier(Modifier::BOLD),
         ))
     } else {
         Line::from(vec![
-            Span::styled(" p ", Style::default().fg(Color::Black).bg(RED).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                " p ",
+                Style::default()
+                    .fg(Color::Black)
+                    .bg(RED)
+                    .add_modifier(Modifier::BOLD),
+            ),
             Span::raw(" panic mode (force kill switch)    "),
-            Span::styled(" q ", Style::default().fg(Color::Black).bg(GRAY).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                " q ",
+                Style::default()
+                    .fg(Color::Black)
+                    .bg(GRAY)
+                    .add_modifier(Modifier::BOLD),
+            ),
             Span::raw(" quit"),
         ])
     };
-    frame.render_widget(Paragraph::new(text).block(Block::default().borders(Borders::ALL)), area);
+    frame.render_widget(
+        Paragraph::new(text).block(Block::default().borders(Borders::ALL)),
+        area,
+    );
 }
 
 fn draw_banner(frame: &mut Frame, message: &str) {

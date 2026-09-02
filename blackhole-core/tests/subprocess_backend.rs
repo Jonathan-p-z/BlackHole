@@ -13,7 +13,10 @@ use blackhole_core::tor::{PermitTarget, TorBackend};
 use blackhole_core::tor_subprocess::{SubprocessConfig, SubprocessTorBackend};
 
 fn fake_tor_config(test_name: &str, port_offset: u16) -> SubprocessConfig {
-    let data_dir = std::env::temp_dir().join(format!("blackhole-core-subprocess-test-{test_name}-{}", std::process::id()));
+    let data_dir = std::env::temp_dir().join(format!(
+        "blackhole-core-subprocess-test-{test_name}-{}",
+        std::process::id()
+    ));
     let _ = std::fs::remove_dir_all(&data_dir);
     SubprocessConfig {
         binary_path: Some(std::path::PathBuf::from(env!("CARGO_BIN_EXE_fake_tor"))),
@@ -30,10 +33,15 @@ async fn starts_and_reports_ready_via_the_fake_binary() {
     let config = fake_tor_config("starts", 0);
     let data_dir = config.data_dir.clone();
 
-    let backend = SubprocessTorBackend::start(config).await.expect("subprocess backend should start against fake_tor");
+    let backend = SubprocessTorBackend::start(config)
+        .await
+        .expect("subprocess backend should start against fake_tor");
 
     let status = backend.status().await;
-    assert!(status.ready_for_traffic, "fake_tor always reports 100%/done bootstrap");
+    assert!(
+        status.ready_for_traffic,
+        "fake_tor always reports 100%/done bootstrap"
+    );
     assert_eq!(status.bootstrap_percent, 100);
     assert!(status.blocked_reason.is_none());
 
@@ -50,7 +58,9 @@ async fn permit_target_is_the_child_binary_path_not_this_process() {
 
     match backend.permit_target() {
         PermitTarget::ChildProcess(path) => assert_eq!(path, expected_path),
-        PermitTarget::ThisProcess => panic!("subprocess backend must report ChildProcess, not ThisProcess"),
+        PermitTarget::ThisProcess => {
+            panic!("subprocess backend must report ChildProcess, not ThisProcess")
+        }
     }
 
     std::fs::remove_dir_all(&data_dir).ok();
@@ -62,7 +72,10 @@ async fn new_identity_round_trips_through_the_control_port() {
     let data_dir = config.data_dir.clone();
 
     let backend = SubprocessTorBackend::start(config).await.unwrap();
-    backend.new_identity().await.expect("SIGNAL NEWNYM should succeed against fake_tor");
+    backend
+        .new_identity()
+        .await
+        .expect("SIGNAL NEWNYM should succeed against fake_tor");
 
     std::fs::remove_dir_all(&data_dir).ok();
 }
@@ -89,18 +102,29 @@ async fn reports_faulted_status_when_the_child_process_dies_unexpectedly() {
     // Simulate an unexpected death: kill the fake_tor process directly by
     // PID, bypassing the backend's own (graceful) shutdown path entirely,
     // exactly like an external crash or OOM-kill would.
-    let pid = backend.child_id().expect("child should still be running here");
+    let pid = backend
+        .child_id()
+        .expect("child should still be running here");
     kill_process(pid);
 
     // Give the OS a moment to actually reap/report the exit.
     tokio::time::sleep(Duration::from_millis(500)).await;
 
     let status = backend.status().await;
-    assert!(!status.ready_for_traffic, "must not report ready after the child died");
-    assert!(status.blocked_reason.is_some(), "must explain that the child is gone, not report a silent/empty status");
+    assert!(
+        !status.ready_for_traffic,
+        "must not report ready after the child died"
+    );
+    assert!(
+        status.blocked_reason.is_some(),
+        "must explain that the child is gone, not report a silent/empty status"
+    );
 
     let new_identity_result = backend.new_identity().await;
-    assert!(new_identity_result.is_err(), "must not claim success rotating identity on a dead backend");
+    assert!(
+        new_identity_result.is_err(),
+        "must not claim success rotating identity on a dead backend"
+    );
 
     std::fs::remove_dir_all(&data_dir).ok();
 }
@@ -110,10 +134,14 @@ async fn reports_faulted_status_when_the_child_process_dies_unexpectedly() {
 fn kill_process(pid: u32) {
     #[cfg(windows)]
     {
-        let _ = std::process::Command::new("taskkill").args(["/F", "/PID", &pid.to_string()]).output();
+        let _ = std::process::Command::new("taskkill")
+            .args(["/F", "/PID", &pid.to_string()])
+            .output();
     }
     #[cfg(target_os = "linux")]
     {
-        let _ = std::process::Command::new("kill").args(["-KILL", &pid.to_string()]).output();
+        let _ = std::process::Command::new("kill")
+            .args(["-KILL", &pid.to_string()])
+            .output();
     }
 }

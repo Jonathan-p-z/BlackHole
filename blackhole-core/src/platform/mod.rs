@@ -7,7 +7,7 @@ mod linux;
 #[cfg(target_os = "linux")]
 pub use linux::LinuxGuard as PlatformGuard;
 #[cfg(target_os = "linux")]
-pub use linux::{default_ruleset_path, restore_persisted_ruleset, RulesetRestoreOutcome};
+pub use linux::{RulesetRestoreOutcome, default_ruleset_path, restore_persisted_ruleset};
 
 #[cfg(target_os = "windows")]
 mod windows;

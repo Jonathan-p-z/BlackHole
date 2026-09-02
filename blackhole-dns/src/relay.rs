@@ -63,7 +63,12 @@ impl Relay {
             }
         };
 
-        let response = Self::build_response(request.metadata.id, request.metadata.op_code, &query, &result);
+        let response = Self::build_response(
+            request.metadata.id,
+            request.metadata.op_code,
+            &query,
+            &result,
+        );
         response.to_vec().ok()
     }
 

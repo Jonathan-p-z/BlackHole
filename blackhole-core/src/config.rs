@@ -41,8 +41,11 @@ struct RootConfig {
 }
 
 pub fn default_config_path() -> Result<PathBuf, BlackholeError> {
-    let dirs = directories::ProjectDirs::from("", "", "blackhole")
-        .ok_or_else(|| BlackholeError::Platform("could not determine a user config directory on this platform".to_string()))?;
+    let dirs = directories::ProjectDirs::from("", "", "blackhole").ok_or_else(|| {
+        BlackholeError::Platform(
+            "could not determine a user config directory on this platform".to_string(),
+        )
+    })?;
     Ok(dirs.config_dir().join("config.toml"))
 }
 
@@ -65,8 +68,9 @@ pub fn load_from(path: &Path) -> Result<CoreConfig, BlackholeError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(CoreConfig::default()),
         Err(e) => return Err(e.into()),
     };
-    let root: RootConfig = toml::from_str(&text)
-        .map_err(|e| BlackholeError::Platform(format!("{}: invalid config file: {e}", path.display())))?;
+    let root: RootConfig = toml::from_str(&text).map_err(|e| {
+        BlackholeError::Platform(format!("{}: invalid config file: {e}", path.display()))
+    })?;
     Ok(root.core)
 }
 
@@ -77,20 +81,35 @@ mod tests {
     #[test]
     fn backend_selection_prefers_cli_over_config_over_default() {
         let no_config = CoreConfig::default();
-        let config_wants_subprocess = CoreConfig { tor_backend: Some(TorBackendKind::Subprocess), ..Default::default() };
+        let config_wants_subprocess = CoreConfig {
+            tor_backend: Some(TorBackendKind::Subprocess),
+            ..Default::default()
+        };
 
         // Nothing set anywhere -> the documented default.
         assert_eq!(resolve_backend_kind(None, &no_config), TorBackendKind::Arti);
         // Config sets it -> config wins over the default.
-        assert_eq!(resolve_backend_kind(None, &config_wants_subprocess), TorBackendKind::Subprocess);
+        assert_eq!(
+            resolve_backend_kind(None, &config_wants_subprocess),
+            TorBackendKind::Subprocess
+        );
         // CLI flag given -> CLI wins even when the config disagrees.
-        assert_eq!(resolve_backend_kind(Some(TorBackendKind::Arti), &config_wants_subprocess), TorBackendKind::Arti);
-        assert_eq!(resolve_backend_kind(Some(TorBackendKind::Subprocess), &no_config), TorBackendKind::Subprocess);
+        assert_eq!(
+            resolve_backend_kind(Some(TorBackendKind::Arti), &config_wants_subprocess),
+            TorBackendKind::Arti
+        );
+        assert_eq!(
+            resolve_backend_kind(Some(TorBackendKind::Subprocess), &no_config),
+            TorBackendKind::Subprocess
+        );
     }
 
     #[test]
     fn missing_file_is_all_defaults_not_an_error() {
-        let path = std::env::temp_dir().join(format!("blackhole-core-config-test-missing-{}.toml", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "blackhole-core-config-test-missing-{}.toml",
+            std::process::id()
+        ));
         let _ = std::fs::remove_file(&path);
         let config = load_from(&path).unwrap();
         assert!(config.tor_backend.is_none());
@@ -99,7 +118,10 @@ mod tests {
 
     #[test]
     fn parses_subprocess_backend_selection() {
-        let path = write_temp("subprocess", "[core]\ntor_backend = \"subprocess\"\ntor_binary_path = \"/usr/bin/tor\"\n");
+        let path = write_temp(
+            "subprocess",
+            "[core]\ntor_backend = \"subprocess\"\ntor_binary_path = \"/usr/bin/tor\"\n",
+        );
         let config = load_from(&path).unwrap();
         assert_eq!(config.tor_backend, Some(TorBackendKind::Subprocess));
         assert_eq!(config.tor_binary_path, Some(PathBuf::from("/usr/bin/tor")));
@@ -116,7 +138,10 @@ mod tests {
 
     #[test]
     fn other_sections_are_ignored_not_rejected() {
-        let path = write_temp("shared", "[dns]\nproviders = [\"cloudflare\"]\n\n[core]\ntor_backend = \"subprocess\"\n");
+        let path = write_temp(
+            "shared",
+            "[dns]\nproviders = [\"cloudflare\"]\n\n[core]\ntor_backend = \"subprocess\"\n",
+        );
         let config = load_from(&path).unwrap();
         assert_eq!(config.tor_backend, Some(TorBackendKind::Subprocess));
         std::fs::remove_file(&path).ok();
@@ -130,7 +155,10 @@ mod tests {
     }
 
     fn write_temp(name: &str, contents: &str) -> PathBuf {
-        let path = std::env::temp_dir().join(format!("blackhole-core-config-test-{name}-{}.toml", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "blackhole-core-config-test-{name}-{}.toml",
+            std::process::id()
+        ));
         std::fs::write(&path, contents).unwrap();
         path
     }

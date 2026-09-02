@@ -26,8 +26,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use hickory_proto::rr::Record;
-use hickory_resolver::config::{ResolverConfig, CLOUDFLARE, QUAD9};
 use hickory_resolver::Resolver;
+use hickory_resolver::config::{CLOUDFLARE, QUAD9, ResolverConfig};
 use tracing::warn;
 
 use crate::error::DnsError;
@@ -51,11 +51,12 @@ const CLOUDFLARE_IPS: [IpAddr; 2] = [
 const QUAD9_IPS: [IpAddr; 1] = [IpAddr::V4(std::net::Ipv4Addr::new(9, 9, 9, 9))];
 const MULLVAD_IPS: [IpAddr; 1] = [IpAddr::V4(std::net::Ipv4Addr::new(194, 242, 2, 2))];
 
-const MULLVAD: hickory_resolver::config::ServerGroup<'static> = hickory_resolver::config::ServerGroup {
-    ips: &MULLVAD_IPS,
-    server_name: "dns.mullvad.net",
-    path: "/dns-query",
-};
+const MULLVAD: hickory_resolver::config::ServerGroup<'static> =
+    hickory_resolver::config::ServerGroup {
+        ips: &MULLVAD_IPS,
+        server_name: "dns.mullvad.net",
+        path: "/dns-query",
+    };
 
 impl Provider {
     /// IPs this provider answers on, used by leak detection to recognize
@@ -124,7 +125,10 @@ fn reject_bogus(records: &[Record], name: &str) -> Result<(), DnsError> {
     if let Some(bogus) = records.iter().find(|r| r.proof.is_bogus()) {
         return Err(DnsError::DnssecValidationFailed {
             name: name.to_string(),
-            detail: format!("record '{}' has DNSSEC proof Bogus (signature or chain of trust invalid)", bogus.name),
+            detail: format!(
+                "record '{}' has DNSSEC proof Bogus (signature or chain of trust invalid)",
+                bogus.name
+            ),
         });
     }
     Ok(())
@@ -163,9 +167,9 @@ impl EncryptedResolver {
             let mut builder = Resolver::builder_with_config(config, Default::default());
             // DNSSEC: authenticate answers, not just encrypt the wire.
             builder.options_mut().validate = true;
-            let inner: hickory_resolver::TokioResolver = builder
-                .build()
-                .map_err(|e| DnsError::Resolve(format!("failed to build resolver for {provider}: {e}")))?;
+            let inner: hickory_resolver::TokioResolver = builder.build().map_err(|e| {
+                DnsError::Resolve(format!("failed to build resolver for {provider}: {e}"))
+            })?;
 
             chain.push((provider, Box::new(inner)));
         }
@@ -200,7 +204,10 @@ impl EncryptedResolver {
     /// these IPs — DoH-via-relay instead expects loopback, passed
     /// separately as `extra_allowed`).
     pub fn all_provider_ips(&self) -> Vec<IpAddr> {
-        self.chain.iter().flat_map(|(p, _)| p.ip_addrs().iter().copied()).collect()
+        self.chain
+            .iter()
+            .flat_map(|(p, _)| p.ip_addrs().iter().copied())
+            .collect()
     }
 
     /// Resolve `name` and report how long it took. Tries the chain in
@@ -227,7 +234,8 @@ impl EncryptedResolver {
 
             match outcome {
                 Ok(records) => {
-                    let ips: Vec<IpAddr> = records.iter().filter_map(|r| r.data.ip_addr()).collect();
+                    let ips: Vec<IpAddr> =
+                        records.iter().filter_map(|r| r.data.ip_addr()).collect();
                     let previous = self.active.swap(idx, Ordering::Relaxed);
                     if previous != idx {
                         warn!(
@@ -245,7 +253,8 @@ impl EncryptedResolver {
             }
         }
 
-        Err(last_err.unwrap_or_else(|| DnsError::Resolve("no DoH/DoT resolvers configured".to_string())))
+        Err(last_err
+            .unwrap_or_else(|| DnsError::Resolve("no DoH/DoT resolvers configured".to_string())))
     }
 }
 
@@ -343,7 +352,10 @@ mod tests {
     #[tokio::test]
     async fn healthy_primary_is_used_without_falling_back() {
         let resolver = resolver_with(vec![
-            (Provider::Cloudflare, Box::new(FakeBackend::ok(Ipv4Addr::new(1, 1, 1, 1)))),
+            (
+                Provider::Cloudflare,
+                Box::new(FakeBackend::ok(Ipv4Addr::new(1, 1, 1, 1))),
+            ),
             (Provider::Quad9, Box::new(FakeBackend::failing())),
         ]);
 
@@ -356,7 +368,10 @@ mod tests {
     async fn failing_primary_falls_back_to_next_without_returning_its_answer() {
         let resolver = resolver_with(vec![
             (Provider::Cloudflare, Box::new(FakeBackend::failing())),
-            (Provider::Quad9, Box::new(FakeBackend::ok(Ipv4Addr::new(9, 9, 9, 9)))),
+            (
+                Provider::Quad9,
+                Box::new(FakeBackend::ok(Ipv4Addr::new(9, 9, 9, 9))),
+            ),
         ]);
 
         let (ips, _) = resolver.resolve("example.com").await.unwrap();
@@ -370,7 +385,10 @@ mod tests {
     async fn dnssec_bogus_primary_falls_back_same_as_a_network_failure() {
         let resolver = resolver_with(vec![
             (Provider::Cloudflare, Box::new(FakeBackend::bogus())),
-            (Provider::Quad9, Box::new(FakeBackend::ok(Ipv4Addr::new(9, 9, 9, 9)))),
+            (
+                Provider::Quad9,
+                Box::new(FakeBackend::ok(Ipv4Addr::new(9, 9, 9, 9))),
+            ),
         ]);
 
         let (ips, _) = resolver.resolve("example.com").await.unwrap();
@@ -382,7 +400,10 @@ mod tests {
     async fn subsequent_queries_start_from_the_provider_that_last_succeeded() {
         let resolver = resolver_with(vec![
             (Provider::Cloudflare, Box::new(FakeBackend::failing())),
-            (Provider::Quad9, Box::new(FakeBackend::ok(Ipv4Addr::new(9, 9, 9, 9)))),
+            (
+                Provider::Quad9,
+                Box::new(FakeBackend::ok(Ipv4Addr::new(9, 9, 9, 9))),
+            ),
         ]);
 
         resolver.resolve("example.com").await.unwrap();

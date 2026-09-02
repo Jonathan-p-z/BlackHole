@@ -34,8 +34,11 @@ struct RootConfig {
 }
 
 pub fn default_config_path() -> Result<PathBuf, FingerprintError> {
-    let dirs = directories::ProjectDirs::from("", "", "blackhole")
-        .ok_or_else(|| FingerprintError::History("could not determine a user config directory on this platform".to_string()))?;
+    let dirs = directories::ProjectDirs::from("", "", "blackhole").ok_or_else(|| {
+        FingerprintError::History(
+            "could not determine a user config directory on this platform".to_string(),
+        )
+    })?;
     Ok(dirs.config_dir().join("config.toml"))
 }
 
@@ -47,11 +50,14 @@ pub fn default_config_path() -> Result<PathBuf, FingerprintError> {
 pub fn load_from(path: &Path) -> Result<FingerprintConfig, FingerprintError> {
     let text = match std::fs::read_to_string(path) {
         Ok(t) => t,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(FingerprintConfig::default()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(FingerprintConfig::default());
+        }
         Err(e) => return Err(e.into()),
     };
-    let root: RootConfig = toml::from_str(&text)
-        .map_err(|e| FingerprintError::History(format!("{}: invalid config file: {e}", path.display())))?;
+    let root: RootConfig = toml::from_str(&text).map_err(|e| {
+        FingerprintError::History(format!("{}: invalid config file: {e}", path.display()))
+    })?;
     Ok(root.fingerprint)
 }
 
@@ -61,7 +67,10 @@ mod tests {
 
     #[test]
     fn missing_file_is_all_defaults_not_an_error() {
-        let path = std::env::temp_dir().join(format!("blackhole-fp-config-test-missing-{}.toml", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "blackhole-fp-config-test-missing-{}.toml",
+            std::process::id()
+        ));
         let _ = std::fs::remove_file(&path);
         assert_eq!(load_from(&path).unwrap(), FingerprintConfig::default());
     }
@@ -93,7 +102,10 @@ mod tests {
     }
 
     fn write_temp(name: &str, contents: &str) -> std::path::PathBuf {
-        let path = std::env::temp_dir().join(format!("blackhole-fp-config-test-{name}-{}.toml", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "blackhole-fp-config-test-{name}-{}.toml",
+            std::process::id()
+        ));
         std::fs::write(&path, contents).unwrap();
         path
     }

@@ -171,7 +171,10 @@ impl GuardStateMachine {
         let state = self.state.lock().unwrap();
         match *state {
             GuardState::Enabled => Ok(()),
-            other => Err(BlackholeError::InvalidTransition { action, state: other }),
+            other => Err(BlackholeError::InvalidTransition {
+                action,
+                state: other,
+            }),
         }
     }
 
@@ -185,15 +188,23 @@ impl GuardStateMachine {
     /// `backend_object` names whatever "actually blocking" checked for, used
     /// only to phrase the `detail` message (e.g. `"nftables table"`,
     /// `"WFP sublayer"`).
-    pub fn reconcile(&self, actually_blocking: bool, backend_object: &str) -> (GuardState, Option<String>) {
+    pub fn reconcile(
+        &self,
+        actually_blocking: bool,
+        backend_object: &str,
+    ) -> (GuardState, Option<String>) {
         match (self.current(), actually_blocking) {
             (GuardState::Enabled, false) => (
                 GuardState::Faulted,
-                Some(format!("in-memory state says enabled but {backend_object} is missing")),
+                Some(format!(
+                    "in-memory state says enabled but {backend_object} is missing"
+                )),
             ),
             (GuardState::Disabled, true) => (
                 GuardState::Faulted,
-                Some(format!("in-memory state says disabled but {backend_object} is still present")),
+                Some(format!(
+                    "in-memory state says disabled but {backend_object} is still present"
+                )),
             ),
             (other, _) => (other, None),
         }

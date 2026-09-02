@@ -2,11 +2,17 @@ use std::sync::Arc;
 
 use blackhole_core::config::{self, CoreConfig, TorBackendKind};
 use blackhole_core::tor::TorBackend;
-use blackhole_core::{NetworkGuard, PlatformGuard, SubprocessConfig, SubprocessTorBackend, TorOrchestrator};
+use blackhole_core::{
+    NetworkGuard, PlatformGuard, SubprocessConfig, SubprocessTorBackend, TorOrchestrator,
+};
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
-#[command(name = "blackhole-core", version, about = "Fail-closed Tor kill switch")]
+#[command(
+    name = "blackhole-core",
+    version,
+    about = "Fail-closed Tor kill switch"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -53,10 +59,15 @@ enum Command {
     RestoreFirewall,
 }
 
-async fn start_backend(kind: TorBackendKind, config: &CoreConfig) -> anyhow::Result<Arc<dyn TorBackend>> {
+async fn start_backend(
+    kind: TorBackendKind,
+    config: &CoreConfig,
+) -> anyhow::Result<Arc<dyn TorBackend>> {
     let backend: Arc<dyn TorBackend> = match kind {
         TorBackendKind::Arti => {
-            eprintln!("[tor backend: arti, in-process] bootstrapping (this can take a while on first run)...");
+            eprintln!(
+                "[tor backend: arti, in-process] bootstrapping (this can take a while on first run)..."
+            );
             Arc::new(TorOrchestrator::start().await?)
         }
         TorBackendKind::Subprocess => {
@@ -88,7 +99,11 @@ async fn main() -> anyhow::Result<()> {
     // firewall ruleset that has nothing to do with Tor being up yet.
     #[cfg(target_os = "linux")]
     if matches!(cli.command, Command::RestoreFirewall) {
-        return match blackhole_core::restore_persisted_ruleset(&blackhole_core::default_ruleset_path()).await {
+        return match blackhole_core::restore_persisted_ruleset(
+            &blackhole_core::default_ruleset_path(),
+        )
+        .await
+        {
             Ok(blackhole_core::RulesetRestoreOutcome::Restored) => {
                 println!("kill-switch ruleset restored from disk.");
                 Ok(())

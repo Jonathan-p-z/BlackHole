@@ -74,7 +74,9 @@ impl ScanRecord {
         const FORMAT: &[time::format_description::FormatItem<'_>] =
             time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second] UTC");
         match time::OffsetDateTime::from_unix_timestamp(self.timestamp_unix as i64) {
-            Ok(dt) => dt.format(FORMAT).unwrap_or_else(|_| self.timestamp_unix.to_string()),
+            Ok(dt) => dt
+                .format(FORMAT)
+                .unwrap_or_else(|_| self.timestamp_unix.to_string()),
             Err(_) => self.timestamp_unix.to_string(),
         }
     }
@@ -84,8 +86,12 @@ impl ScanRecord {
 /// (e.g. `~/.local/share/blackhole-fingerprint/history.jsonl` on Linux,
 /// `%APPDATA%\blackhole-fingerprint\history.jsonl` on Windows).
 pub fn default_history_path() -> Result<PathBuf, FingerprintError> {
-    let dirs = directories::ProjectDirs::from("", "", "blackhole-fingerprint")
-        .ok_or_else(|| FingerprintError::History("could not determine a user data directory on this platform".to_string()))?;
+    let dirs =
+        directories::ProjectDirs::from("", "", "blackhole-fingerprint").ok_or_else(|| {
+            FingerprintError::History(
+                "could not determine a user data directory on this platform".to_string(),
+            )
+        })?;
     Ok(dirs.data_dir().join("history.jsonl"))
 }
 
@@ -96,7 +102,10 @@ pub fn append(path: &Path, record: &ScanRecord) -> Result<(), FingerprintError> 
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let mut file = std::fs::OpenOptions::new().create(true).append(true).open(path)?;
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)?;
     let line = serde_json::to_string(record)
         .map_err(|e| FingerprintError::History(format!("failed to serialize scan record: {e}")))?;
     writeln!(file, "{line}")?;
@@ -121,8 +130,13 @@ pub fn load_all(path: &Path) -> Result<Vec<ScanRecord>, FingerprintError> {
         .filter(|(_, line)| !matches!(line, Ok(l) if l.trim().is_empty()))
         .map(|(i, line)| {
             let line = line?;
-            serde_json::from_str(&line)
-                .map_err(|e| FingerprintError::History(format!("{}: line {} is not a valid scan record: {e}", path.display(), i + 1)))
+            serde_json::from_str(&line).map_err(|e| {
+                FingerprintError::History(format!(
+                    "{}: line {} is not a valid scan record: {e}",
+                    path.display(),
+                    i + 1
+                ))
+            })
         })
         .collect()
 }
@@ -199,7 +213,12 @@ impl<'a> HistoryDiff<'a> {
 
 impl std::fmt::Display for HistoryDiff<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "comparing {} -> {}", self.previous.human_timestamp(), self.current.human_timestamp())?;
+        writeln!(
+            f,
+            "comparing {} -> {}",
+            self.previous.human_timestamp(),
+            self.current.human_timestamp()
+        )?;
 
         if self.unchanged() {
             writeln!(f, "no change")?;
@@ -216,18 +235,34 @@ impl std::fmt::Display for HistoryDiff<'_> {
         )?;
 
         for (category, delta) in &self.category_deltas {
-            writeln!(f, "  {category}: {}{delta}", if *delta > 0 { "+" } else { "" })?;
+            writeln!(
+                f,
+                "  {category}: {}{delta}",
+                if *delta > 0 { "+" } else { "" }
+            )?;
         }
 
         for finding in &self.resolved_findings {
-            writeln!(f, "resolved: [{}] ({}) {}", finding.severity, finding.category, finding.summary)?;
+            writeln!(
+                f,
+                "resolved: [{}] ({}) {}",
+                finding.severity, finding.category, finding.summary
+            )?;
         }
         for finding in &self.new_findings {
-            writeln!(f, "new:      [{}] ({}) {}", finding.severity, finding.category, finding.summary)?;
+            writeln!(
+                f,
+                "new:      [{}] ({}) {}",
+                finding.severity, finding.category, finding.summary
+            )?;
         }
 
         if self.is_significant_degradation() {
-            writeln!(f, "\n/!\\ significant degradation since last scan (score dropped by {})", -self.score_delta)?;
+            writeln!(
+                f,
+                "\n/!\\ significant degradation since last scan (score dropped by {})",
+                -self.score_delta
+            )?;
         }
 
         Ok(())
@@ -256,7 +291,10 @@ mod tests {
         let path = dir.join("history.jsonl");
         let _ = std::fs::remove_file(&path);
 
-        let r1 = record(vec![(Category::Telemetry, Severity::Medium, "diagtrack running")], 1000);
+        let r1 = record(
+            vec![(Category::Telemetry, Severity::Medium, "diagtrack running")],
+            1000,
+        );
         let r2 = record(vec![], 2000);
         append(&path, &r1).unwrap();
         append(&path, &r2).unwrap();
@@ -272,7 +310,10 @@ mod tests {
 
     #[test]
     fn loading_a_missing_file_is_an_empty_history_not_an_error() {
-        let path = std::env::temp_dir().join(format!("blackhole-fp-test-missing-{}.jsonl", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "blackhole-fp-test-missing-{}.jsonl",
+            std::process::id()
+        ));
         let _ = std::fs::remove_file(&path);
         assert_eq!(load_all(&path).unwrap().len(), 0);
     }
@@ -284,7 +325,14 @@ mod tests {
         // The exact scenario from the prompt: telemetry disabled -> enabled
         // after a Windows update.
         let previous = record(vec![], 1000);
-        let current = record(vec![(Category::Telemetry, Severity::Medium, "DiagTrack service is running")], 2000);
+        let current = record(
+            vec![(
+                Category::Telemetry,
+                Severity::Medium,
+                "DiagTrack service is running",
+            )],
+            2000,
+        );
 
         let diff = HistoryDiff::compute(&previous, &current);
         assert!(!diff.unchanged());
@@ -296,7 +344,14 @@ mod tests {
 
     #[test]
     fn diff_detects_a_finding_that_was_resolved() {
-        let previous = record(vec![(Category::Telemetry, Severity::Medium, "DiagTrack service is running")], 1000);
+        let previous = record(
+            vec![(
+                Category::Telemetry,
+                Severity::Medium,
+                "DiagTrack service is running",
+            )],
+            1000,
+        );
         let current = record(vec![], 2000);
 
         let diff = HistoryDiff::compute(&previous, &current);
@@ -307,8 +362,14 @@ mod tests {
 
     #[test]
     fn diff_is_quiet_when_nothing_changed() {
-        let previous = record(vec![(Category::NetworkIdentity, Severity::Low, "custom hostname")], 1000);
-        let current = record(vec![(Category::NetworkIdentity, Severity::Low, "custom hostname")], 2000);
+        let previous = record(
+            vec![(Category::NetworkIdentity, Severity::Low, "custom hostname")],
+            1000,
+        );
+        let current = record(
+            vec![(Category::NetworkIdentity, Severity::Low, "custom hostname")],
+            2000,
+        );
 
         let diff = HistoryDiff::compute(&previous, &current);
         assert!(diff.unchanged());
@@ -324,7 +385,10 @@ mod tests {
             ],
             1000,
         );
-        let current = record(vec![(Category::NetworkIdentity, Severity::Low, "custom hostname")], 2000);
+        let current = record(
+            vec![(Category::NetworkIdentity, Severity::Low, "custom hostname")],
+            2000,
+        );
 
         let diff = HistoryDiff::compute(&previous, &current);
         assert_eq!(diff.category_deltas.len(), 1);
@@ -337,7 +401,10 @@ mod tests {
         let previous = record(vec![], 1000);
         let just_under = record(vec![(Category::Telemetry, Severity::Low, "x")], 2000); // -5, not significant
         let at_threshold = record(
-            vec![(Category::Telemetry, Severity::Medium, "y"), (Category::Telemetry, Severity::Low, "z")],
+            vec![
+                (Category::Telemetry, Severity::Medium, "y"),
+                (Category::Telemetry, Severity::Low, "z"),
+            ],
             3000,
         ); // -17, significant
 
@@ -352,8 +419,22 @@ mod tests {
         // itself changes, so it's naturally seen as "resolved" + "new"
         // rather than needing special same-finding-different-severity
         // tracking.
-        let previous = record(vec![(Category::Telemetry, Severity::Info, "AllowTelemetry policy set to 1 (Basic)")], 1000);
-        let current = record(vec![(Category::Telemetry, Severity::Medium, "AllowTelemetry policy set to 3 (above Basic)")], 2000);
+        let previous = record(
+            vec![(
+                Category::Telemetry,
+                Severity::Info,
+                "AllowTelemetry policy set to 1 (Basic)",
+            )],
+            1000,
+        );
+        let current = record(
+            vec![(
+                Category::Telemetry,
+                Severity::Medium,
+                "AllowTelemetry policy set to 3 (above Basic)",
+            )],
+            2000,
+        );
 
         let diff = HistoryDiff::compute(&previous, &current);
         assert_eq!(diff.resolved_findings.len(), 1);

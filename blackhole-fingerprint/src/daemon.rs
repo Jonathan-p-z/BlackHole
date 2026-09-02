@@ -27,7 +27,11 @@ pub fn nth_tick(start: Instant, interval: Duration, n: u32) -> Instant {
 /// the first). Blocking/synchronous — this crate has no async runtime —
 /// so it's meant to be the entire body of a `daemon` CLI subcommand, not
 /// called from inside other work.
-pub fn run<F, S>(interval: Duration, mut on_tick: F, mut should_stop: S) -> Result<(), FingerprintError>
+pub fn run<F, S>(
+    interval: Duration,
+    mut on_tick: F,
+    mut should_stop: S,
+) -> Result<(), FingerprintError>
 where
     F: FnMut() -> Result<(), FingerprintError>,
     S: FnMut() -> bool,
@@ -60,8 +64,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::atomic::{AtomicU32, Ordering};
     use std::sync::Mutex;
+    use std::sync::atomic::{AtomicU32, Ordering};
 
     #[test]
     fn nth_tick_is_evenly_spaced_from_start_not_cumulative() {
@@ -69,8 +73,14 @@ mod tests {
         let interval = Duration::from_secs(60);
 
         assert_eq!(nth_tick(start, interval, 0), start);
-        assert_eq!(nth_tick(start, interval, 1), start + Duration::from_secs(60));
-        assert_eq!(nth_tick(start, interval, 5), start + Duration::from_secs(300));
+        assert_eq!(
+            nth_tick(start, interval, 1),
+            start + Duration::from_secs(60)
+        );
+        assert_eq!(
+            nth_tick(start, interval, 5),
+            start + Duration::from_secs(300)
+        );
         // Directly encodes "no drift": the 5th tick is exactly 5x the
         // interval after start, not "whatever accumulated sleep(60s) x5
         // plus each tick's own work happened to add up to".

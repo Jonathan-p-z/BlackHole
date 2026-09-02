@@ -44,7 +44,11 @@ impl Category {
     /// Every category, in a fixed order — used to walk "all categories"
     /// consistently (e.g. building a per-category score breakdown for
     /// `history::ScanRecord`).
-    pub const ALL: [Category; 3] = [Category::NetworkIdentity, Category::Telemetry, Category::Exposure];
+    pub const ALL: [Category; 3] = [
+        Category::NetworkIdentity,
+        Category::Telemetry,
+        Category::Exposure,
+    ];
 
     pub fn label(self) -> &'static str {
         match self {
@@ -94,7 +98,12 @@ impl Report {
     /// over the network — it is not a substitute for a real browser-based
     /// fingerprinting test (see the module docs on `exposure`).
     pub fn score(&self) -> u32 {
-        let total: i32 = 100 - self.findings.iter().map(|f| f.severity.penalty()).sum::<i32>();
+        let total: i32 = 100
+            - self
+                .findings
+                .iter()
+                .map(|f| f.severity.penalty())
+                .sum::<i32>();
         total.clamp(0, 100) as u32
     }
 
@@ -182,9 +191,23 @@ mod tests {
     #[test]
     fn score_label_boundaries() {
         assert_eq!(Report::new(vec![]).score_label(), "well hardened");
-        assert_eq!(Report::new(vec![finding(Severity::High), finding(Severity::Low)]).score_label(), "moderate exposure");
-        assert_eq!(Report::new(vec![finding(Severity::High), finding(Severity::High), finding(Severity::High)]).score_label(), "significant exposure");
-        assert_eq!(Report::new(vec![finding(Severity::High); 5]).score_label(), "highly traceable");
+        assert_eq!(
+            Report::new(vec![finding(Severity::High), finding(Severity::Low)]).score_label(),
+            "moderate exposure"
+        );
+        assert_eq!(
+            Report::new(vec![
+                finding(Severity::High),
+                finding(Severity::High),
+                finding(Severity::High)
+            ])
+            .score_label(),
+            "significant exposure"
+        );
+        assert_eq!(
+            Report::new(vec![finding(Severity::High); 5]).score_label(),
+            "highly traceable"
+        );
     }
 
     #[test]
@@ -200,7 +223,11 @@ mod tests {
 
     #[test]
     fn display_sorts_most_severe_first() {
-        let report = Report::new(vec![finding(Severity::Low), finding(Severity::High), finding(Severity::Info)]);
+        let report = Report::new(vec![
+            finding(Severity::Low),
+            finding(Severity::High),
+            finding(Severity::Info),
+        ]);
         let text = report.to_string();
         let high_pos = text.find("[HIGH]").unwrap();
         let low_pos = text.find("[LOW]").unwrap();

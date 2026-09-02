@@ -33,8 +33,11 @@ struct RootConfig {
 /// which intentionally uses its own crate-scoped *data* directory for
 /// scan history, a concern this file has nothing to do with).
 pub fn default_config_path() -> Result<PathBuf, DnsError> {
-    let dirs = directories::ProjectDirs::from("", "", "blackhole")
-        .ok_or_else(|| DnsError::SystemConfig("could not determine a user config directory on this platform".to_string()))?;
+    let dirs = directories::ProjectDirs::from("", "", "blackhole").ok_or_else(|| {
+        DnsError::SystemConfig(
+            "could not determine a user config directory on this platform".to_string(),
+        )
+    })?;
     Ok(dirs.config_dir().join("config.toml"))
 }
 
@@ -49,8 +52,9 @@ pub fn load_from(path: &Path) -> Result<DnsConfig, DnsError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(DnsConfig::default()),
         Err(e) => return Err(e.into()),
     };
-    let root: RootConfig = toml::from_str(&text)
-        .map_err(|e| DnsError::SystemConfig(format!("{}: invalid config file: {e}", path.display())))?;
+    let root: RootConfig = toml::from_str(&text).map_err(|e| {
+        DnsError::SystemConfig(format!("{}: invalid config file: {e}", path.display()))
+    })?;
     Ok(root.dns)
 }
 
@@ -60,7 +64,10 @@ mod tests {
 
     #[test]
     fn missing_file_is_all_defaults_not_an_error() {
-        let path = std::env::temp_dir().join(format!("blackhole-dns-test-missing-{}.toml", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "blackhole-dns-test-missing-{}.toml",
+            std::process::id()
+        ));
         let _ = std::fs::remove_file(&path);
         let config = load_from(&path).unwrap();
         assert!(config.providers.is_none());
@@ -86,7 +93,10 @@ mod tests {
             "#,
         );
         let config = load_from(&path).unwrap();
-        assert_eq!(config.providers, Some(vec![Provider::Quad9, Provider::Mullvad]));
+        assert_eq!(
+            config.providers,
+            Some(vec![Provider::Quad9, Provider::Mullvad])
+        );
         assert_eq!(config.transport, Some(Transport::Dot));
         std::fs::remove_file(&path).ok();
     }
@@ -119,7 +129,10 @@ mod tests {
     }
 
     fn write_temp(name: &str, contents: &str) -> std::path::PathBuf {
-        let path = std::env::temp_dir().join(format!("blackhole-dns-test-{name}-{}.toml", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "blackhole-dns-test-{name}-{}.toml",
+            std::process::id()
+        ));
         std::fs::write(&path, contents).unwrap();
         path
     }

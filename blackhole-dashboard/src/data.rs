@@ -14,7 +14,7 @@ use crate::app::{DnsInfo, KillSwitchInfo, ModuleState, Snapshot, TorInfo};
 
 use blackhole_core::{GuardState, NetworkGuard, PlatformGuard, TorOrchestrator};
 use blackhole_dns::resolver::Transport;
-use blackhole_dns::{leak, EncryptedResolver, Provider};
+use blackhole_dns::{EncryptedResolver, Provider, leak};
 
 #[async_trait]
 pub trait DataSource: Send {
@@ -45,7 +45,9 @@ impl LiveDataSource {
         }
     }
 
-    async fn ensure_tor_and_guard(&mut self) -> &Result<(Arc<TorOrchestrator>, PlatformGuard), String> {
+    async fn ensure_tor_and_guard(
+        &mut self,
+    ) -> &Result<(Arc<TorOrchestrator>, PlatformGuard), String> {
         if self.tor_and_guard.is_none() {
             let result = match TorOrchestrator::start().await {
                 Ok(tor) => {

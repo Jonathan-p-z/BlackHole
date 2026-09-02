@@ -80,7 +80,9 @@ pub enum RulesetRestoreOutcome {
 /// into something invalid) is reported as an error rather than silently
 /// skipped — loud failure over a silent fail-open. See `BOOT_PERSISTENCE.md`
 /// for what this does and does not guarantee.
-pub async fn restore_persisted_ruleset(path: &Path) -> Result<RulesetRestoreOutcome, BlackholeError> {
+pub async fn restore_persisted_ruleset(
+    path: &Path,
+) -> Result<RulesetRestoreOutcome, BlackholeError> {
     if !path.is_file() {
         info!(path = %path.display(), "no persisted kill-switch ruleset; nothing to restore");
         return Ok(RulesetRestoreOutcome::NothingPersisted);
@@ -108,8 +110,8 @@ async fn run_nft(args: &[&str]) -> Result<std::process::Output, BlackholeError> 
 }
 
 async fn run_nft_with_stdin(args: &[&str], stdin_data: &str) -> Result<(), BlackholeError> {
-    use tokio::io::AsyncWriteExt;
     use std::process::Stdio;
+    use tokio::io::AsyncWriteExt;
 
     let mut child = Command::new(NFT_BIN)
         .args(args)
@@ -127,7 +129,10 @@ async fn run_nft_with_stdin(args: &[&str], stdin_data: &str) -> Result<(), Black
         .await
         .map_err(BlackholeError::from)?;
 
-    let output = child.wait_with_output().await.map_err(BlackholeError::from)?;
+    let output = child
+        .wait_with_output()
+        .await
+        .map_err(BlackholeError::from)?;
     if !output.status.success() {
         return Err(BlackholeError::CommandFailed {
             command: format!("{NFT_BIN} {}", args.join(" ")),
@@ -281,7 +286,10 @@ impl NetworkGuard for LinuxGuard {
         if result.is_ok() {
             info!(uid, path = %self.ruleset_path.display(), "nftables kill switch enabled (default-deny output, persisted for boot restore)");
         } else {
-            warn!(?result, "failed to fully apply nftables kill switch; treating as faulted (fail-closed)");
+            warn!(
+                ?result,
+                "failed to fully apply nftables kill switch; treating as faulted (fail-closed)"
+            );
         }
         result
     }
@@ -348,9 +356,15 @@ mod persistence_tests {
         // test in this crate reads or writes this specific key, so in
         // practice it's safe — flagged here rather than silently relied on.
         unsafe { std::env::set_var(key, "/tmp/custom-ruleset.rules") };
-        assert_eq!(default_ruleset_path(), PathBuf::from("/tmp/custom-ruleset.rules"));
+        assert_eq!(
+            default_ruleset_path(),
+            PathBuf::from("/tmp/custom-ruleset.rules")
+        );
         unsafe { std::env::remove_var(key) };
-        assert_eq!(default_ruleset_path(), PathBuf::from("/etc/blackhole/nftables.rules"));
+        assert_eq!(
+            default_ruleset_path(),
+            PathBuf::from("/etc/blackhole/nftables.rules")
+        );
 
         match previous {
             Some(v) => unsafe { std::env::set_var(key, v) },
@@ -364,13 +378,19 @@ mod persistence_tests {
         let _ = std::fs::remove_file(&path);
 
         persist_ruleset(&path, "table inet blackhole {}\n").unwrap();
-        assert_eq!(std::fs::read_to_string(&path).unwrap(), "table inet blackhole {}\n");
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            "table inet blackhole {}\n"
+        );
 
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
             let mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
-            assert_eq!(mode, 0o600, "persisted ruleset must be owner-only: it's trusted `nft -f` input re-run as root at boot");
+            assert_eq!(
+                mode, 0o600,
+                "persisted ruleset must be owner-only: it's trusted `nft -f` input re-run as root at boot"
+            );
         }
 
         remove_persisted_ruleset(&path).unwrap();

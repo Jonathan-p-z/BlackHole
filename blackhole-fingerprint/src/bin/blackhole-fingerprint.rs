@@ -7,7 +7,10 @@ use blackhole_fingerprint::{config, daemon, exposure, network_identity, telemetr
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "blackhole-fingerprint", about = "Traceability audit: local identity, OS telemetry, network exposure")]
+#[command(
+    name = "blackhole-fingerprint",
+    about = "Traceability audit: local identity, OS telemetry, network exposure"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -75,13 +78,20 @@ fn resolve_history_path(explicit: Option<PathBuf>) -> anyhow::Result<PathBuf> {
 }
 
 fn now_unix() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs()
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
 }
 
 /// Print the report, record it to history (unless `no_history`), and — if
 /// there was a previous scan — print the diff against it and warn loudly
 /// on a significant degradation. Shared by `scan` and each `daemon` tick.
-fn scan_record_and_report(offline: bool, no_history: bool, history_path: &std::path::Path) -> anyhow::Result<Report> {
+fn scan_record_and_report(
+    offline: bool,
+    no_history: bool,
+    history_path: &std::path::Path,
+) -> anyhow::Result<Report> {
     let report = run_scan(offline);
     println!("{report}");
 
@@ -114,7 +124,11 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Command::Scan { offline, no_history, history_path } => {
+        Command::Scan {
+            offline,
+            no_history,
+            history_path,
+        } => {
             let history_path = resolve_history_path(history_path)?;
             let report = scan_record_and_report(offline, no_history, &history_path)?;
 
@@ -126,7 +140,10 @@ fn main() -> anyhow::Result<()> {
             let history_path = resolve_history_path(history_path)?;
             let records = history::load_all(&history_path)?;
             if records.len() < 2 {
-                println!("not enough recorded scans yet to diff (need at least 2, have {})", records.len());
+                println!(
+                    "not enough recorded scans yet to diff (need at least 2, have {})",
+                    records.len()
+                );
                 return Ok(());
             }
             let current = &records[records.len() - 1];
@@ -138,14 +155,23 @@ fn main() -> anyhow::Result<()> {
                 std::process::exit(1);
             }
         }
-        Command::Daemon { interval_secs, offline, history_path } => {
+        Command::Daemon {
+            interval_secs,
+            offline,
+            history_path,
+        } => {
             let history_path = resolve_history_path(history_path)?;
-            let fp_config = config::load_from(&config::default_config_path()?).unwrap_or_else(|e| {
-                eprintln!("warning: ignoring config file ({e})");
-                config::FingerprintConfig::default()
-            });
-            let interval_secs = interval_secs.or(fp_config.daemon_interval_secs).unwrap_or(86400);
-            eprintln!("blackhole-fingerprint daemon: scanning every {interval_secs}s (Ctrl+C to stop)");
+            let fp_config =
+                config::load_from(&config::default_config_path()?).unwrap_or_else(|e| {
+                    eprintln!("warning: ignoring config file ({e})");
+                    config::FingerprintConfig::default()
+                });
+            let interval_secs = interval_secs
+                .or(fp_config.daemon_interval_secs)
+                .unwrap_or(86400);
+            eprintln!(
+                "blackhole-fingerprint daemon: scanning every {interval_secs}s (Ctrl+C to stop)"
+            );
 
             daemon::run(
                 Duration::from_secs(interval_secs),
@@ -154,7 +180,9 @@ fn main() -> anyhow::Result<()> {
                     eprintln!("\n=== scan at unix time {ts} ===");
                     scan_record_and_report(offline, false, &history_path)
                         .map(|_| ())
-                        .map_err(|e| blackhole_fingerprint::error::FingerprintError::History(e.to_string()))
+                        .map_err(|e| {
+                            blackhole_fingerprint::error::FingerprintError::History(e.to_string())
+                        })
                 },
                 || false,
             )?;
