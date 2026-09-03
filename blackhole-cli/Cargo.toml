@@ -1,0 +1,17 @@
+[package]
+name = "blackhole-cli"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "blackhole"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.104"
+blackhole-core = { version = "0.1.0", path = "../blackhole-core" }
+blackhole-dashboard = { version = "0.1.0", path = "../blackhole-dashboard" }
+blackhole-dns = { version = "0.1.0", path = "../blackhole-dns" }
+blackhole-fingerprint = { version = "0.1.0", path = "../blackhole-fingerprint" }
+clap = { version = "4.6.6", features = ["derive"] }
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros"] }

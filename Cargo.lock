@@ -443,6 +443,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "blackhole-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "blackhole-core",
+ "blackhole-dashboard",
+ "blackhole-dns",
+ "blackhole-fingerprint",
+ "clap",
+ "tokio",
+]
+
+[[package]]
 name = "blackhole-core"
 version = "0.1.0"
 dependencies = [
