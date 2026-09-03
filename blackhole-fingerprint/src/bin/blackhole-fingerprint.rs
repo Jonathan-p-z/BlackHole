@@ -1,9 +1,9 @@
 use std::path::PathBuf;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
-use blackhole_fingerprint::history::{self, HistoryDiff, ScanRecord};
-use blackhole_fingerprint::report::Report;
-use blackhole_fingerprint::{config, daemon, exposure, network_identity, telemetry};
+use blackhole_fingerprint::history::{self, HistoryDiff};
+use blackhole_fingerprint::scan::{now_unix, resolve_history_path, scan_record_and_report};
+use blackhole_fingerprint::{config, daemon};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -51,73 +51,6 @@ enum Command {
         #[arg(long)]
         history_path: Option<PathBuf>,
     },
-}
-
-fn run_scan(offline: bool) -> Report {
-    let mut findings = Vec::new();
-
-    match network_identity::checks() {
-        Ok(f) => findings.extend(f),
-        Err(e) => eprintln!("warning: network identity checks failed: {e}"),
-    }
-
-    findings.extend(telemetry::checks());
-
-    if !offline {
-        findings.extend(exposure::checks());
-    }
-
-    Report::new(findings)
-}
-
-fn resolve_history_path(explicit: Option<PathBuf>) -> anyhow::Result<PathBuf> {
-    match explicit {
-        Some(p) => Ok(p),
-        None => Ok(history::default_history_path()?),
-    }
-}
-
-fn now_unix() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs()
-}
-
-/// Print the report, record it to history (unless `no_history`), and — if
-/// there was a previous scan — print the diff against it and warn loudly
-/// on a significant degradation. Shared by `scan` and each `daemon` tick.
-fn scan_record_and_report(
-    offline: bool,
-    no_history: bool,
-    history_path: &std::path::Path,
-) -> anyhow::Result<Report> {
-    let report = run_scan(offline);
-    println!("{report}");
-
-    if no_history {
-        return Ok(report);
-    }
-
-    let previous = history::load_all(history_path)?.into_iter().next_back();
-    let record = ScanRecord::from_report(&report, now_unix());
-    history::append(history_path, &record)?;
-
-    if let Some(previous) = previous {
-        let diff = HistoryDiff::compute(&previous, &record);
-        if !diff.unchanged() {
-            println!("\n--- change since last scan ---");
-            println!("{diff}");
-        }
-        if diff.is_significant_degradation() {
-            eprintln!(
-                "\n/!\\ traceability has significantly worsened since the last scan (score {} -> {})",
-                previous.score, record.score
-            );
-        }
-    }
-
-    Ok(report)
 }
 
 fn main() -> anyhow::Result<()> {
@@ -178,11 +111,7 @@ fn main() -> anyhow::Result<()> {
                 || {
                     let ts = now_unix();
                     eprintln!("\n=== scan at unix time {ts} ===");
-                    scan_record_and_report(offline, false, &history_path)
-                        .map(|_| ())
-                        .map_err(|e| {
-                            blackhole_fingerprint::error::FingerprintError::History(e.to_string())
-                        })
+                    scan_record_and_report(offline, false, &history_path).map(|_| ())
                 },
                 || false,
             )?;

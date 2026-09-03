@@ -1,10 +1,5 @@
-use std::sync::Arc;
-
 use blackhole_core::config::{self, CoreConfig, TorBackendKind};
-use blackhole_core::tor::TorBackend;
-use blackhole_core::{
-    NetworkGuard, PlatformGuard, SubprocessConfig, SubprocessTorBackend, TorOrchestrator,
-};
+use blackhole_core::{NetworkGuard, PlatformGuard};
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
@@ -59,32 +54,6 @@ enum Command {
     RestoreFirewall,
 }
 
-async fn start_backend(
-    kind: TorBackendKind,
-    config: &CoreConfig,
-) -> anyhow::Result<Arc<dyn TorBackend>> {
-    let backend: Arc<dyn TorBackend> = match kind {
-        TorBackendKind::Arti => {
-            eprintln!(
-                "[tor backend: arti, in-process] bootstrapping (this can take a while on first run)..."
-            );
-            Arc::new(TorOrchestrator::start().await?)
-        }
-        TorBackendKind::Subprocess => {
-            eprintln!(
-                "[tor backend: subprocess, official tor binary] starting — this is a temporary workaround \
-                 for a known arti bootstrap bug, not a permanent replacement; see TOR_BACKENDS.md"
-            );
-            let subprocess_config = SubprocessConfig {
-                binary_path: config.tor_binary_path.clone(),
-                ..Default::default()
-            };
-            Arc::new(SubprocessTorBackend::start(subprocess_config).await?)
-        }
-    };
-    Ok(backend)
-}
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
@@ -127,7 +96,7 @@ async fn main() -> anyhow::Result<()> {
     // firewall rules can name it as the allowed egress. A future revision
     // could persist guard state across invocations instead of re-starting
     // per CLI call.
-    let tor = start_backend(backend_kind, &core_config).await?;
+    let tor = blackhole_core::start_backend(backend_kind, &core_config).await?;
     let guard = PlatformGuard::new(tor);
 
     match cli.command {

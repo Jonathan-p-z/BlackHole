@@ -37,6 +37,12 @@ pub struct LiveDataSource {
     dns_resolver: Option<Result<EncryptedResolver, String>>,
 }
 
+impl Default for LiveDataSource {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LiveDataSource {
     pub fn new() -> Self {
         Self {
@@ -172,6 +178,12 @@ impl DataSource for LiveDataSource {
 pub struct MockDataSource {
     bootstrap_percent: u8,
     leak_toggle_counter: u32,
+}
+
+impl Default for MockDataSource {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockDataSource {

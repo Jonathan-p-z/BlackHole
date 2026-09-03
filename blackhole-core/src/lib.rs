@@ -8,6 +8,7 @@
 //! control. It is not designed to resist a state-level adversary with
 //! sustained physical access, nor to evade a lawful investigation.
 
+pub mod backend;
 pub mod config;
 pub mod error;
 pub mod guard;
@@ -16,6 +17,7 @@ pub mod tor;
 pub mod tor_control;
 pub mod tor_subprocess;
 
+pub use backend::start_backend;
 pub use error::BlackholeError;
 pub use guard::{GuardState, GuardStateMachine, GuardStatus, NetworkGuard};
 pub use platform::PlatformGuard;

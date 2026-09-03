@@ -88,25 +88,6 @@ impl From<TransportArg> for Transport {
     }
 }
 
-/// CLI flag (if given) > config file's `[dns]` section (if set) > this
-/// crate's own hardcoded default. Never silently ignores an explicit
-/// `--provider`/`--transport` in favor of the config file.
-fn resolve_providers(cli: Option<Vec<ProviderArg>>, config: &DnsConfig) -> Vec<Provider> {
-    if let Some(cli) = cli {
-        return cli.into_iter().map(Into::into).collect();
-    }
-    if let Some(configured) = &config.providers {
-        return configured.clone();
-    }
-    vec![Provider::Cloudflare]
-}
-
-fn resolve_transport(cli: Option<TransportArg>, config: &DnsConfig) -> Transport {
-    cli.map(Into::into)
-        .or(config.transport)
-        .unwrap_or(Transport::Doh)
-}
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
@@ -125,8 +106,11 @@ async fn main() -> anyhow::Result<()> {
             transport,
             enforce,
         } => {
-            let providers = resolve_providers(providers, &config);
-            let transport = resolve_transport(transport, &config);
+            let providers = config::resolve_providers(
+                providers.map(|ps| ps.into_iter().map(Into::into).collect()),
+                &config,
+            );
+            let transport = config::resolve_transport(transport.map(Into::into), &config);
             let resolver = EncryptedResolver::new(&providers, transport)?;
             let report = leak::check(&resolver, &[]).await?;
             println!("{report}");
@@ -164,8 +148,11 @@ async fn main() -> anyhow::Result<()> {
             transport,
             listen,
         } => {
-            let providers = resolve_providers(providers, &config);
-            let transport = resolve_transport(transport, &config);
+            let providers = config::resolve_providers(
+                providers.map(|ps| ps.into_iter().map(Into::into).collect()),
+                &config,
+            );
+            let transport = config::resolve_transport(transport.map(Into::into), &config);
             let resolver = Arc::new(EncryptedResolver::new(&providers, transport)?);
             let server = relay::Relay::new(resolver);
             server.serve_udp(listen).await?;

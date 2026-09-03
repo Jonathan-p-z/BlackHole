@@ -58,6 +58,26 @@ pub fn load_from(path: &Path) -> Result<DnsConfig, DnsError> {
     Ok(root.dns)
 }
 
+/// CLI flag (if given) > config file's `[dns] providers` (if set) > this
+/// crate's own default (`[Provider::Cloudflare]`). Never silently ignores
+/// an explicit CLI choice in favor of the config file. Shared by the
+/// `blackhole-dns` binary and any other orchestrator (e.g. `blackhole-cli`)
+/// that needs the same providers-resolution precedence.
+pub fn resolve_providers(cli: Option<Vec<Provider>>, config: &DnsConfig) -> Vec<Provider> {
+    if let Some(cli) = cli {
+        return cli;
+    }
+    if let Some(configured) = &config.providers {
+        return configured.clone();
+    }
+    vec![Provider::Cloudflare]
+}
+
+/// Same precedence as [`resolve_providers`], for transport.
+pub fn resolve_transport(cli: Option<Transport>, config: &DnsConfig) -> Transport {
+    cli.or(config.transport).unwrap_or(Transport::Doh)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -126,6 +146,44 @@ mod tests {
         let path = write_temp("broken", "this is not [ valid toml");
         assert!(load_from(&path).is_err());
         std::fs::remove_file(&path).ok();
+    }
+
+    #[test]
+    fn resolve_providers_prefers_cli_over_config_over_default() {
+        let no_config = DnsConfig::default();
+        let config_wants_quad9 = DnsConfig {
+            providers: Some(vec![Provider::Quad9]),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            resolve_providers(None, &no_config),
+            vec![Provider::Cloudflare]
+        );
+        assert_eq!(
+            resolve_providers(None, &config_wants_quad9),
+            vec![Provider::Quad9]
+        );
+        assert_eq!(
+            resolve_providers(Some(vec![Provider::Mullvad]), &config_wants_quad9),
+            vec![Provider::Mullvad]
+        );
+    }
+
+    #[test]
+    fn resolve_transport_prefers_cli_over_config_over_default() {
+        let no_config = DnsConfig::default();
+        let config_wants_dot = DnsConfig {
+            transport: Some(Transport::Dot),
+            ..Default::default()
+        };
+
+        assert_eq!(resolve_transport(None, &no_config), Transport::Doh);
+        assert_eq!(resolve_transport(None, &config_wants_dot), Transport::Dot);
+        assert_eq!(
+            resolve_transport(Some(Transport::Doh), &config_wants_dot),
+            Transport::Doh
+        );
     }
 
     fn write_temp(name: &str, contents: &str) -> std::path::PathBuf {
