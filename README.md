@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Rust](https://img.shields.io/badge/language-Rust-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-lightgrey.svg)
+[![CI](https://github.com/Jonathan-p-z/BlackHole/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Jonathan-p-z/BlackHole/actions/workflows/ci.yml)
 
 <img src="assets/blackhole-header.jpg" alt="Black hole illustration (NASA/GSFC)" width="480"/>
 
@@ -16,15 +17,23 @@ Tor, a DNS leak detector that forces encrypted resolution, a status
 dashboard, and a local traceability auditor. Each tool is a separate
 binary and can be used on its own.
 
+**New here? Use the `blackhole` command** (from the [`blackhole-cli`](blackhole-cli)
+crate): one binary that wraps all four modules below behind simple
+subcommands (`blackhole enable`, `blackhole status`, `blackhole scan`,
+`blackhole dashboard`, ...), so you don't need to learn four separate
+tools for everyday use. Each module's own binary (`blackhole-core`,
+`blackhole-dns`, `blackhole-dashboard`, `blackhole-fingerprint`) still
+works exactly as before for anyone who prefers it directly; see
+[What's here](#whats-here) below for each one, and
+[`QUICKSTART.md`](QUICKSTART.md) to get started with either.
+
 **This is a personal project, not a commercial product or a
 professionally audited security tool.** It has not been reviewed by a
 third-party security firm. What it does and does not protect against is
 documented per crate in each `THREAT_MODEL.md`, and the honest summary is:
 it reduces commercial/network tracking for someone willing to read the
 threat models and verify the firewall behavior on their own machine, not
-a guarantee against a determined or well-resourced adversary. New here?
-[`QUICKSTART.md`](QUICKSTART.md) is the 5-minute version of the
-Installation section below.
+a guarantee against a determined or well-resourced adversary.
 
 ## Contents
 
@@ -39,6 +48,7 @@ Installation section below.
 
 | Crate | Purpose | Status |
 | --- | --- | --- |
+| `blackhole-cli` | **Recommended entry point.** Single orchestrator binary (`blackhole`) wrapping the four modules below behind one set of subcommands: `enable`/`disable`/`status`/`dashboard`/`scan` (+ `scan diff`)/`panic`. Calls each module's own public functions directly; doesn't reimplement any of their logic. | working |
 | `blackhole-core` | Fail-closed kill switch (nftables on Linux, WFP on Windows) plus Tor orchestration: `arti` in-process by default, or the official `tor` binary as a subprocess (see [`TOR_BACKENDS.md`](TOR_BACKENDS.md)). Linux firewall state survives a reboot (see [`BOOT_PERSISTENCE.md`](BOOT_PERSISTENCE.md)). | working |
 | `blackhole-dns` | Anti-DNS-leak: forces encrypted DNS (DoH/DoT), detects leaks, can trigger the kill switch. | working |
 | `blackhole-dashboard` | `ratatui` status TUI over the two modules above. | working |
