@@ -56,11 +56,33 @@ here; if the two ever disagree, `.cargo/audit.toml` is wrong.
 
 ## Sensitive data in memory (`zeroize`)
 
-As of 2026-08-31, an audit of every crate in the workspace
+**Update (blackhole-cookies)**: this crate's CA private key is the first
+real exception to the "no secret material" finding below. It's a private
+key (used to sign per-domain TLS certificates for as long as the local
+proxy runs; see `blackhole-cookies/THREAT_MODEL.md`), read from a PEM
+file on disk. What's actually covered:
+
+- The raw PEM text is read into a `zeroize::Zeroizing<String>` and
+  zeroized immediately after `rcgen::KeyPair::from_pem` has parsed it
+  (`blackhole-cookies/src/ca.rs::load_or_generate`), rather than left in
+  an ordinary `String` for the rest of the process's life.
+- **Not covered, and not coverable by us**: the parsed `rcgen::KeyPair`
+  itself, and whatever `RcgenAuthority`/`hudsucker` build from it, are
+  held in memory for the entire proxy run to actually sign certificates
+  with. These are third-party types this workspace doesn't control the
+  definition of, so we cannot add `ZeroizeOnDrop` to them directly. This
+  is a real, acknowledged gap, not a silent one: the key material is only
+  as protected in long-term memory as `rcgen`/`hudsucker` themselves make
+  it, for as long as the proxy process is running.
+- The on-disk key file itself gets owner-only permissions (`0600` on
+  Unix) immediately after being written; see `ca.rs`'s
+  `write_private_key_file`.
+
+As of 2026-08-31, an audit of every other crate in the workspace
 (`blackhole-core`, `blackhole-dns`, `blackhole-dashboard`,
-`blackhole-fingerprint`, `blackhole-mobile-ffi`) found **no struct that
-holds secret material** (private keys, tokens, passwords, session
-cookies) in our own code:
+`blackhole-fingerprint`, `blackhole-mobile-ffi`, `blackhole-cli`) found
+**no struct that holds secret material** (private keys, tokens,
+passwords, session cookies) in our own code:
 
 - Tor key material is managed entirely inside `arti-client`'s own state,
   never surfaced to `blackhole-core`.
@@ -74,13 +96,15 @@ cookies) in our own code:
 - `blackhole-mobile-ffi` passes only `u32` severity codes across the FFI
   boundary.
 
-Given that, `zeroize` is deliberately **not** added as a dependency yet:
-adding it with no real use site would be dead weight, not hardening.
+Given that, `zeroize` is deliberately **not** a dependency of any of
+these crates: adding it with no real use site would be dead weight, not
+hardening. (It is a dependency of `blackhole-cookies` specifically, for
+the real use site described above.)
 
-**Policy for future code**: the moment any crate in this workspace holds
-real secret material in memory (a Tor control-port auth cookie, a stored
-session token, a SOCKS/relay credential, anything similar), that struct
-must:
+**Policy for future code**: the moment any other crate in this workspace
+holds real secret material in memory (a Tor control-port auth cookie, a
+stored session token, a SOCKS/relay credential, anything similar), that
+struct must:
 
 1. Depend on `zeroize` and derive `ZeroizeOnDrop` (and `Zeroize` on any
    type it's built from that also holds the secret).

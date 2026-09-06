@@ -52,6 +52,7 @@ a guarantee against a determined or well-resourced adversary.
 | `blackhole-core` | Fail-closed kill switch (nftables on Linux, WFP on Windows) plus Tor orchestration: `arti` in-process by default, or the official `tor` binary as a subprocess (see [`TOR_BACKENDS.md`](TOR_BACKENDS.md)). Linux firewall state survives a reboot (see [`BOOT_PERSISTENCE.md`](BOOT_PERSISTENCE.md)). | working |
 | `blackhole-dns` | Anti-DNS-leak: forces encrypted DNS (DoH/DoT), detects leaks, can trigger the kill switch. | working |
 | `blackhole-dashboard` | `ratatui` status TUI over the two modules above. | working |
+| `blackhole-cookies` | Local HTTP/S proxy that randomizes third-party tracker cookies per session. Uses the same mechanism as spyware (local TLS interception); disabled by default, never installed automatically. **Read [`blackhole-cookies/THREAT_MODEL.md`](blackhole-cookies/THREAT_MODEL.md) in full before using it.** | working |
 | `blackhole-fingerprint` | Read-only local traceability audit (hostname/MAC/telemetry/public exposure). | working |
 | `blackhole-mobile-ffi` | C-ABI scoring bridge shared with `blackhole-mobile-ios`. | working |
 | `blackhole-mobile-ios` | SwiftUI + `PacketTunnelProvider` iOS app (separate, non-Cargo project). | untested |
